@@ -1,12 +1,12 @@
-import { setup, assign, type AnyActorRef } from 'xstate';
-import { missions, type MissionData } from '../data/missions';
+import { setup, assign, type AnyActorRef } from "xstate";
+import { missions, type MissionData } from "../data/missions";
 
 export interface GameContext {
   currentMission: number;
   fuel: number;
   completedMissions: number[];
   roverUnlocked: boolean;
-  controlMode: 'thrustAndTorque' | 'torqueOnly';
+  controlMode: "thrustAndTorque" | "torqueOnly";
   showOnScreenButtons: boolean;
   velocity: { x: number; y: number };
   altitude: number;
@@ -18,32 +18,32 @@ export interface GameContext {
 }
 
 export type GameEvent =
-  | { type: 'LOADED' }
-  | { type: 'LAUNCH' }
-  | { type: 'BROWSE' }
-  | { type: 'INFO' }
-  | { type: 'CLOSE' }
-  | { type: 'LANDED'; missionIndex?: number }
-  | { type: 'CRASHED' }
-  | { type: 'MISSED' }
-  | { type: 'RETRY' }
-  | { type: 'RESTART_MISSION' }
-  | { type: 'RESTARTED' }
-  | { type: 'SIMULATE' }
-  | { type: 'CONTINUE' }
-  | { type: 'DRIVE_ROVER' }
-  | { type: 'RETURN_TO_LANDER' }
-  | { type: 'PAUSE' }
-  | { type: 'RESUME' }
-  | { type: 'EXPLORE_MISSIONS' }
-  | { type: 'SCROLL'; position: number }
-  | { type: 'SET_MANUAL_MISSION'; missionIndex: number | null }
-  | { type: 'JUMP_TO_MISSION'; missionIndex: number }
-  | { type: 'CONTROLS_PRESSED' }
-  | { type: 'EXIT_MANUAL' }
-  | { type: 'KONAMI' }
+  | { type: "LOADED" }
+  | { type: "LAUNCH" }
+  | { type: "BROWSE" }
+  | { type: "INFO" }
+  | { type: "CLOSE" }
+  | { type: "LANDED"; missionIndex?: number }
+  | { type: "CRASHED" }
+  | { type: "MISSED" }
+  | { type: "RETRY" }
+  | { type: "RESTART_MISSION" }
+  | { type: "RESTARTED" }
+  | { type: "SIMULATE" }
+  | { type: "CONTINUE" }
+  | { type: "DRIVE_ROVER" }
+  | { type: "RETURN_TO_LANDER" }
+  | { type: "PAUSE" }
+  | { type: "RESUME" }
+  | { type: "EXPLORE_MISSIONS" }
+  | { type: "SCROLL"; position: number }
+  | { type: "SET_MANUAL_MISSION"; missionIndex: number | null }
+  | { type: "JUMP_TO_MISSION"; missionIndex: number }
+  | { type: "CONTROLS_PRESSED" }
+  | { type: "EXIT_MANUAL" }
+  | { type: "KONAMI" }
   | {
-      type: 'UPDATE_TELEMETRY';
+      type: "UPDATE_TELEMETRY";
       velocity: { x: number; y: number };
       altitude: number;
       angle: number;
@@ -63,7 +63,7 @@ export const gameMachine = setup({
     completeMission: assign({
       completedMissions: ({ context, event }) => {
         const missionIndex =
-          event.type === 'LANDED' && event.missionIndex != null
+          event.type === "LANDED" && event.missionIndex != null
             ? event.missionIndex
             : context.currentMission;
         return context.completedMissions.includes(missionIndex)
@@ -71,17 +71,16 @@ export const gameMachine = setup({
           : [...context.completedMissions, missionIndex];
       },
       currentMission: ({ context, event }) =>
-        event.type === 'LANDED' && event.missionIndex != null
+        event.type === "LANDED" && event.missionIndex != null
           ? event.missionIndex
           : context.currentMission,
     }),
     advanceMission: assign({
-      currentMission: ({ context }) =>
-        Math.min(context.currentMission + 1, missions.length - 1),
+      currentMission: ({ context }) => Math.min(context.currentMission + 1, missions.length - 1),
     }),
     setMission: assign({
       currentMission: ({ event }) => {
-        if (event.type !== 'JUMP_TO_MISSION') return 0;
+        if (event.type !== "JUMP_TO_MISSION") return 0;
         return event.missionIndex;
       },
     }),
@@ -92,17 +91,17 @@ export const gameMachine = setup({
     }),
     setBrowsePosition: assign({
       browsePosition: ({ event, context }) => {
-        if (event.type !== 'SCROLL') return context.browsePosition;
+        if (event.type !== "SCROLL") return context.browsePosition;
         return Math.max(0, Math.min(1, event.position));
       },
     }),
     setManualMission: assign({
       currentMission: ({ event, context }) => {
-        if (event.type !== 'SET_MANUAL_MISSION') return context.currentMission;
+        if (event.type !== "SET_MANUAL_MISSION") return context.currentMission;
         return event.missionIndex ?? context.currentMission;
       },
       manualMissionInView: ({ event, context }) => {
-        if (event.type !== 'SET_MANUAL_MISSION') {
+        if (event.type !== "SET_MANUAL_MISSION") {
           return context.manualMissionInView;
         }
         return event.missionIndex != null;
@@ -111,23 +110,23 @@ export const gameMachine = setup({
     unlockRover: assign({ roverUnlocked: true }),
     updateTelemetry: assign({
       velocity: ({ event }) => {
-        if (event.type !== 'UPDATE_TELEMETRY') return { x: 0, y: 0 };
+        if (event.type !== "UPDATE_TELEMETRY") return { x: 0, y: 0 };
         return event.velocity;
       },
       altitude: ({ event }) => {
-        if (event.type !== 'UPDATE_TELEMETRY') return 0;
+        if (event.type !== "UPDATE_TELEMETRY") return 0;
         return event.altitude;
       },
       angle: ({ event }) => {
-        if (event.type !== 'UPDATE_TELEMETRY') return 0;
+        if (event.type !== "UPDATE_TELEMETRY") return 0;
         return event.angle;
       },
       fuel: ({ event }) => {
-        if (event.type !== 'UPDATE_TELEMETRY') return 100;
+        if (event.type !== "UPDATE_TELEMETRY") return 100;
         return event.fuel;
       },
       thrustLevel: ({ event }) => {
-        if (event.type !== 'UPDATE_TELEMETRY') return 0;
+        if (event.type !== "UPDATE_TELEMETRY") return 0;
         return event.thrustLevel;
       },
     }),
@@ -137,22 +136,21 @@ export const gameMachine = setup({
       const mission = missions[context.currentMission];
       return context.roverUnlocked || mission?.roverAvailable === true;
     },
-    hasNextMission: ({ context }) =>
-      context.currentMission < missions.length - 1,
+    hasNextMission: ({ context }) => context.currentMission < missions.length - 1,
     isKonamiRoverUnlock: ({ context }) => {
       const mission = missions[context.currentMission];
       return mission?.roverAvailable === true;
     },
   },
 }).createMachine({
-  id: 'lunarLander',
-  initial: 'loading',
+  id: "lunarLander",
+  initial: "loading",
   context: {
     currentMission: 0,
     fuel: 100,
     completedMissions: [],
     roverUnlocked: false,
-    controlMode: 'thrustAndTorque',
+    controlMode: "thrustAndTorque",
     showOnScreenButtons: false,
     velocity: { x: 0, y: 0 },
     altitude: 0,
@@ -163,52 +161,56 @@ export const gameMachine = setup({
     restartRequested: false,
   },
   on: {
-    UPDATE_TELEMETRY: { actions: 'updateTelemetry' },
-    RESTARTED: { actions: 'clearRestartRequested' },
+    UPDATE_TELEMETRY: { actions: "updateTelemetry" },
+    RESTARTED: { actions: "clearRestartRequested" },
   },
   states: {
     loading: {
-      on: { LOADED: 'title' },
+      on: { LOADED: "title" },
     },
 
     title: {
       on: {
-        LAUNCH: 'playing',
+        LAUNCH: "playing",
         BROWSE: {
-          target: 'manual',
-          actions: 'resetManualBrowse',
+          target: "manual",
+          actions: "resetManualBrowse",
         },
-        INFO: 'info',
+        INFO: "info",
+        EXPLORE_MISSIONS: {
+          target: "manual",
+          actions: "resetManualBrowse",
+        },
       },
     },
 
     info: {
-      on: { CLOSE: 'title' },
+      on: { CLOSE: "title" },
     },
 
     playing: {
-      initial: 'descending',
+      initial: "descending",
       on: {
         KONAMI: {
-          target: '.rover',
-          actions: 'unlockRover',
+          target: ".rover",
+          actions: "unlockRover",
         },
         JUMP_TO_MISSION: {
-          target: '.simulatingLanding',
-          actions: ['setMission', 'resetFuel'],
+          target: ".simulatingLanding",
+          actions: ["setMission", "resetFuel"],
         },
       },
       states: {
         descending: {
-          entry: 'resetFuel',
+          entry: "resetFuel",
           on: {
-            PAUSE: 'paused',
+            PAUSE: "paused",
             LANDED: {
-              target: 'landed',
-              actions: 'completeMission',
+              target: "landed",
+              actions: "completeMission",
             },
-            CRASHED: 'crashed',
-            MISSED: 'missed',
+            CRASHED: "crashed",
+            MISSED: "missed",
           },
         },
 
@@ -216,84 +218,84 @@ export const gameMachine = setup({
           on: {
             CONTINUE: [
               {
-                target: 'descending',
-                guard: 'hasNextMission',
-                actions: 'advanceMission',
+                target: "descending",
+                guard: "hasNextMission",
+                actions: "advanceMission",
               },
-              { target: '#lunarLander.title' },
+              { target: "#lunarLander.title" },
             ],
             DRIVE_ROVER: {
-              target: 'rover',
-              guard: 'canDriveRover',
+              target: "rover",
+              guard: "canDriveRover",
             },
             EXPLORE_MISSIONS: {
-              target: '#lunarLander.manual',
-              actions: 'resetManualBrowse',
+              target: "#lunarLander.manual",
+              actions: "resetManualBrowse",
             },
           },
         },
 
         crashed: {
           on: {
-            RETRY: 'descending',
-            SIMULATE: 'simulatingLanding',
+            RETRY: "descending",
+            SIMULATE: "simulatingLanding",
             EXPLORE_MISSIONS: {
-              target: '#lunarLander.manual',
-              actions: 'resetManualBrowse',
+              target: "#lunarLander.manual",
+              actions: "resetManualBrowse",
             },
           },
         },
 
         missed: {
           on: {
-            RETRY: 'descending',
-            SIMULATE: 'simulatingLanding',
+            RETRY: "descending",
+            SIMULATE: "simulatingLanding",
             EXPLORE_MISSIONS: {
-              target: '#lunarLander.manual',
-              actions: 'resetManualBrowse',
+              target: "#lunarLander.manual",
+              actions: "resetManualBrowse",
             },
           },
         },
 
         simulatingLanding: {
           on: {
-            PAUSE: 'paused',
+            PAUSE: "paused",
             LANDED: {
-              target: 'landed',
-              actions: 'completeMission',
+              target: "landed",
+              actions: "completeMission",
             },
           },
         },
 
         rover: {
           on: {
-            PAUSE: 'paused',
-            RETURN_TO_LANDER: 'descending',
+            PAUSE: "paused",
+            RETURN_TO_LANDER: "descending",
           },
         },
 
         paused: {
           on: {
             RESUME: {
-              target: '#lunarLander.playing.hist',
+              target: "#lunarLander.playing.hist",
             },
             RESTART_MISSION: {
-              target: '#lunarLander.playing.descending',
-              actions: 'markRestartRequested',
+              target: "#lunarLander.playing.descending",
+              actions: "markRestartRequested",
             },
             EXPLORE_MISSIONS: {
-              target: '#lunarLander.manual',
-              actions: 'resetManualBrowse',
+              target: "#lunarLander.manual",
+              actions: "resetManualBrowse",
             },
             SIMULATE: {
-              target: '#lunarLander.playing.simulatingLanding',
+              target: "#lunarLander.playing.simulatingLanding",
             },
           },
         },
 
         hist: {
-          type: 'history',
-          history: 'deep',
+          type: "history",
+          history: "deep",
         },
       },
     },
@@ -301,13 +303,13 @@ export const gameMachine = setup({
     manual: {
       on: {
         SCROLL: {
-          actions: 'setBrowsePosition',
+          actions: "setBrowsePosition",
         },
         SET_MANUAL_MISSION: {
-          actions: 'setManualMission',
+          actions: "setManualMission",
         },
-        CONTROLS_PRESSED: 'playing',
-        EXIT_MANUAL: 'title',
+        CONTROLS_PRESSED: "playing",
+        EXIT_MANUAL: "title",
       },
     },
   },

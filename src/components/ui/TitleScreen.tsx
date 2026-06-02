@@ -18,7 +18,12 @@ interface TitleScreenProps {
   onInfo: () => void;
 }
 
-export default function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
+export default function TitleScreen({
+  onLaunch,
+  onBrowse,
+  onInfo,
+  onExploreMissions,
+}: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tlRef = useRef<gsap.core.Timeline | null>(null);
@@ -30,7 +35,7 @@ export default function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenP
       const tl = gsap.timeline();
       tlRef.current = tl;
 
-      tl.set(`.${styles.buttonGroup} button`, { opacity: 0 });
+      tl.set(`.${styles.buttonGroup} button`, { opacity: 0, y: 20 });
 
       tl.addLabel("title-start");
 
@@ -128,11 +133,8 @@ clamp:false
         "title-end-=1"
       );
 
-      tl.fromTo(
+      tl.to(
         `.${styles.buttonGroup} button`,
-        {
-          y: 20,
-        },
         {
           y: 0,
           duration: 1.5,
@@ -158,16 +160,11 @@ clamp:false
       <h1 className={styles.title}>Lunar Landing</h1>
       <div className={styles.buttonGroup}>
         <Button onClick={onLaunch} large>
-          Launch Mission
+          Launch
         </Button>
-        <div className={styles.secondaryButtonGroup}>
-          <Button onClick={onBrowse} subtle>
-            Browse Missions
-          </Button>
-          <Button onClick={onInfo} subtle>
-            Controls
-          </Button>
-        </div>
+        <Button onClick={onExploreMissions} subtle>
+          Explore
+        </Button>
       </div>
     </div>
   );

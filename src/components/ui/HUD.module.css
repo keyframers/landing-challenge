@@ -21,6 +21,12 @@
   z-index: 20 !important;
 }
 
+.topBarButtons {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 .logo {
   font-size: 0.75rem;
   letter-spacing: 0.2em;
