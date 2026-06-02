@@ -80,6 +80,8 @@
 
 .fuelValue.low {
   color: #ff4444;
+  animation: fuelPulse 0.85s ease-in-out infinite;
+  text-shadow: 0 0 12px rgba(255, 68, 68, 0.7);
 }
 
 .rightPanel {
@@ -148,15 +150,19 @@
 .thrustBar {
   height: 6px;
   border-radius: 1px;
-  transition: background 0.1s;
-}
-
-.thrustBar.active {
-  background: #ffcc00;
-}
-
-.thrustBar.inactive {
   background: rgba(255, 255, 255, 0.08);
+  transform-origin: center bottom;
+}
+
+@keyframes fuelPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .missionProgress {

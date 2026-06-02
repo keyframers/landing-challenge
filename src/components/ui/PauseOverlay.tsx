@@ -4,12 +4,14 @@ interface PauseOverlayProps {
   onResume: () => void;
   onSimulate: () => void;
   onExploreMissions: () => void;
+  onControls: () => void;
 }
 
 export default function PauseOverlay({
   onResume,
   onSimulate,
   onExploreMissions,
+  onControls,
 }: PauseOverlayProps) {
   return (
     <div className={styles.overlay}>
@@ -33,6 +35,12 @@ export default function PauseOverlay({
             className={`${styles.button} ${styles.secondaryButton}`}
           >
             Explore Missions
+          </button>
+          <button
+            onClick={onControls}
+            className={`${styles.button} ${styles.secondaryButton}`}
+          >
+            Controls
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
-import { Container, Graphics } from 'pixi.js';
+import { Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import type RAPIER from '@dimforge/rapier2d-compat';
+import roverSvgUrl from '../data/Rover.svg?url';
 import {
   ROVER_WIDTH,
   ROVER_HEIGHT,
@@ -13,6 +14,11 @@ export const ROVER_WHEEL_OFFSETS = [-0.95, 0.95];
 const WIREFRAME_COLOR = 0xffffff;
 const WHEEL_MOUNT_Y = ROVER_HEIGHT * 0.2;
 const DRIVE_FORCE_SPLIT = 1 / ROVER_WHEEL_OFFSETS.length;
+let roverTexture: Texture | null = null;
+
+export async function loadRoverGraphics() {
+  roverTexture = await Assets.load<Texture>(roverSvgUrl);
+}
 
 export interface Rover {
   container: Container;
@@ -38,62 +44,17 @@ export function drawRoverGraphics(container: Container) {
   const ppm = PIXELS_PER_METER;
   const hw = (ROVER_WIDTH / 2) * ppm;
   const hh = (ROVER_HEIGHT / 2) * ppm;
-  const wheelR = hh * 0.45;
-  const wheelY = hh * 0.85;
-  const wireframe = tuning.wireframe;
-
-  function finish(g: Graphics, color: number) {
-    if (wireframe) {
-      g.stroke({ color: WIREFRAME_COLOR, width: 2 });
-    } else {
-      g.fill({ color });
-    }
-  }
-
-  const chassis = new Graphics();
-  chassis.roundRect(-hw, -hh, hw * 2, hh * 1.3, 3);
-  finish(chassis, 0xaaaaaa);
-  container.addChild(chassis);
-
-  const equip = new Graphics();
-  equip.roundRect(-hw * 0.4, -hh * 1.6, hw * 0.3, hh * 0.8, 2);
-  finish(equip, 0x999999);
-  equip.roundRect(hw * 0.1, -hh * 1.4, hw * 0.5, hh * 0.6, 2);
-  finish(equip, 0x888888);
-  container.addChild(equip);
-
-  const antenna = new Graphics();
-  antenna.moveTo(-hw * 0.2, -hh * 1.6);
-  antenna.lineTo(-hw * 0.3, -hh * 2.5);
-  antenna.stroke({ color: wireframe ? WIREFRAME_COLOR : 0xcccccc, width: 1 });
-  antenna.circle(-hw * 0.3, -hh * 2.5, 8);
-  if (wireframe) {
-    antenna.stroke({ color: WIREFRAME_COLOR, width: 1, alpha: 0.8 });
-  } else {
-    antenna.fill({ color: 0xdddddd, alpha: 0.8 });
-  }
-  container.addChild(antenna);
-
-  for (let i = 0; i < ROVER_WHEEL_OFFSETS.length; i++) {
-    const wheel = new Graphics();
-    wheel.circle(0, 0, wheelR);
-    wheel.stroke({ color: wireframe ? WIREFRAME_COLOR : 0x666666, width: 2 });
-    wheel.moveTo(-wheelR, 0);
-    wheel.lineTo(wheelR, 0);
-    wheel.stroke({ color: wireframe ? WIREFRAME_COLOR : 0x666666, width: 1 });
-    wheel.moveTo(0, -wheelR);
-    wheel.lineTo(0, wheelR);
-    wheel.stroke({ color: wireframe ? WIREFRAME_COLOR : 0x666666, width: 1 });
-    wheel.x = ROVER_WHEEL_OFFSETS[i] * ppm;
-    wheel.y = wheelY;
-    wheel.label = `wheel${i}`;
-    container.addChild(wheel);
-  }
+  const sprite = new Sprite(roverTexture ?? Texture.WHITE);
+  sprite.anchor.set(0.5);
+  sprite.width = hw * 2;
+  sprite.height = hh * 2;
+  sprite.label = 'roverSprite';
+  container.addChild(sprite);
 
   const debugCollider = new Graphics();
   debugCollider.rect(-hw, -hh, hw * 2, hh * 2);
   debugCollider.stroke({
-    color: wireframe ? WIREFRAME_COLOR : 0xff3355,
+    color: tuning.wireframe ? WIREFRAME_COLOR : 0xff3355,
     width: 2,
     alpha: 0.9,
   });
@@ -222,11 +183,23 @@ export function updateRoverPhysics(
   if (contacts > 0) {
     rover.terrainAngle = Math.atan2(averageTangentY, averageTangentX);
     rover.terrainDistance = nearestGround;
+    const down = localVector(body, 0, 1);
+    body.applyImpulse(
+      {
+        x: down.x * tuning.roverDownforce * dt,
+        y: down.y * tuning.roverDownforce * dt,
+      },
+      true,
+    );
   } else {
     rover.terrainDistance = Infinity;
   }
 
-  const vel = body.linvel();
+  let vel = body.linvel();
+  if (contacts > 0 && vel.y < 0) {
+    body.setLinvel({ x: vel.x, y: vel.y * 0.35 }, true);
+    vel = body.linvel();
+  }
   const speed = Math.hypot(vel.x, vel.y);
   if (speed > tuning.roverMaxSpeed) {
     const scale = tuning.roverMaxSpeed / speed;

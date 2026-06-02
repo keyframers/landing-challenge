@@ -11,6 +11,12 @@ import { missions } from '../data/missions';
 import { tuning } from './tuning';
 
 const WIREFRAME_COLOR = 0xffffff;
+const LUNAR_TOP = 0xd8dce2;
+const LUNAR_MID = 0xaeb6c1;
+const LUNAR_LOW = 0x6f7987;
+const LUNAR_SHADOW = 0x323b48;
+const ROCK_LIGHT = 0xc9cdd3;
+const ROCK_DARK = 0x596372;
 
 export interface TerrainLayer {
   container: Container;
@@ -309,25 +315,94 @@ export function createTerrainGraphics(
   heights: number[],
   color: number,
   alpha: number,
+  textured = false,
 ): Graphics {
   const g = new Graphics();
   const ppm = PIXELS_PER_METER;
   const wireframe = tuning.wireframe;
 
+  function drawTerrainFill(fillColor: number, fillAlpha: number, drop = 1000) {
+    g.moveTo(0, heights[0] * ppm);
+    for (let i = 1; i < heights.length; i++) {
+      g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
+    }
+    g.lineTo((heights.length - 1) * TERRAIN_SEGMENT_SIZE * ppm, drop * ppm);
+    g.lineTo(0, drop * ppm);
+    g.closePath();
+    g.fill({ color: fillColor, alpha: fillAlpha });
+  }
+
+  if (wireframe) {
+    g.moveTo(0, heights[0] * ppm);
+    for (let i = 1; i < heights.length; i++) {
+      g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
+    }
+    g.stroke({ color: WIREFRAME_COLOR, width: 2, alpha: 0.9 });
+  } else {
+    drawTerrainFill(color, alpha);
+    if (textured) {
+      drawTerrainFill(LUNAR_TOP, 0.38, TERRAIN_BASE_HEIGHT + 64);
+      drawTerrainFill(LUNAR_MID, 0.2, TERRAIN_BASE_HEIGHT + 120);
+      drawTerrainFill(LUNAR_SHADOW, 0.16);
+      drawSurfaceHighlights(g, heights);
+      drawProceduralRocks(g, heights);
+    }
+  }
+
+  return g;
+}
+
+function terrainRandom(seed: number) {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function drawSurfaceHighlights(g: Graphics, heights: number[]) {
+  const ppm = PIXELS_PER_METER;
   g.moveTo(0, heights[0] * ppm);
   for (let i = 1; i < heights.length; i++) {
     g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
   }
-  if (wireframe) {
-    g.stroke({ color: WIREFRAME_COLOR, width: 2, alpha: 0.9 });
-  } else {
-    g.lineTo((heights.length - 1) * TERRAIN_SEGMENT_SIZE * ppm, 1000 * ppm);
-    g.lineTo(0, 1000 * ppm);
-    g.closePath();
-    g.fill({ color, alpha });
-  }
+  g.stroke({ color: 0xf2f3f5, width: 2, alpha: 0.22 });
 
-  return g;
+  g.moveTo(0, (heights[0] + 7) * ppm);
+  for (let i = 1; i < heights.length; i++) {
+    g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, (heights[i] + 7) * ppm);
+  }
+  g.stroke({ color: LUNAR_LOW, width: 4, alpha: 0.1 });
+}
+
+function drawProceduralRocks(g: Graphics, heights: number[]) {
+  const ppm = PIXELS_PER_METER;
+  const step = 42;
+
+  for (let x = 24; x < TERRAIN_TOTAL_WIDTH - 24; x += step) {
+    const r = terrainRandom(x * 0.173);
+    if (r < 0.28) continue;
+
+    const baseY = getTerrainHeightAt(heights, x);
+    const width = (1.0 + terrainRandom(x * 0.41) * 2.6) * ppm;
+    const height = (0.5 + terrainRandom(x * 0.67) * 1.6) * ppm;
+    const px = x * ppm;
+    const py = baseY * ppm;
+    const lean = (terrainRandom(x * 0.91) - 0.5) * width * 0.45;
+
+    g.moveTo(px - width * 0.55, py);
+    g.lineTo(px + lean, py - height);
+    g.lineTo(px, py);
+    g.closePath();
+    g.fill({ color: ROCK_LIGHT, alpha: 0.58 });
+
+    g.moveTo(px, py);
+    g.lineTo(px + lean, py - height);
+    g.lineTo(px + width * 0.55, py);
+    g.closePath();
+    g.fill({ color: ROCK_DARK, alpha: 0.52 });
+
+    g.moveTo(px - width * 0.55, py + 1);
+    g.lineTo(px + width * 0.6, py + 1);
+    g.stroke({ color: LUNAR_SHADOW, width: 1.5, alpha: 0.18 });
+  }
 }
 
 export function createLandingZoneMarker(zone: LandingZone): Graphics {
@@ -368,19 +443,19 @@ export function redrawTerrainSystem(terrain: TerrainSystem) {
   const [bgLayer, midLayer, mainLayer, visualFgLayer] = terrain.layers;
   bgLayer.container.removeChildren();
   bgLayer.container.addChild(
-    createTerrainGraphics(terrain.layers[0].heights, 0x171726, 0.55),
+    createTerrainGraphics(terrain.layers[0].heights, 0x1b2431, 0.62),
   );
   midLayer.container.removeChildren();
   midLayer.container.addChild(
-    createTerrainGraphics(terrain.middleHeights, 0x252536, 0.85),
+    createTerrainGraphics(terrain.middleHeights, 0x515c6a, 0.88),
   );
   mainLayer.container.removeChildren();
   mainLayer.container.addChild(
-    createTerrainGraphics(terrain.foregroundHeights, 0x3a3a4a, 1.0),
+    createTerrainGraphics(terrain.foregroundHeights, 0x9ba4b0, 1.0, true),
   );
   visualFgLayer.container.removeChildren();
   visualFgLayer.container.addChild(
-    createTerrainGraphics(terrain.visualForegroundHeights, 0x11111a, 1.0),
+    createTerrainGraphics(terrain.visualForegroundHeights, 0xbcc2ca, 1.0, true),
   );
 
   terrain.landingZoneMarkers.removeChildren();
@@ -430,7 +505,7 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 0.2,
   };
   bgLayer.container.addChild(
-    createTerrainGraphics(bgHeights, 0x171726, 0.55),
+    createTerrainGraphics(bgHeights, 0x1b2431, 0.62),
   );
 
   const midLayer: TerrainLayer = {
@@ -439,7 +514,7 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1,
   };
   midLayer.container.addChild(
-    createTerrainGraphics(middleHeights, 0x252536, 0.85),
+    createTerrainGraphics(middleHeights, 0x515c6a, 0.88),
   );
 
   const fgLayer: TerrainLayer = {
@@ -448,7 +523,7 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1.0,
   };
   fgLayer.container.addChild(
-    createTerrainGraphics(foregroundHeights, 0x3a3a4a, 1.0),
+    createTerrainGraphics(foregroundHeights, 0x9ba4b0, 1.0, true),
   );
 
   const visualFgLayer: TerrainLayer = {
@@ -457,7 +532,7 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1.28,
   };
   visualFgLayer.container.addChild(
-    createTerrainGraphics(visualForegroundHeights, 0x11111a, 1.0),
+    createTerrainGraphics(visualForegroundHeights, 0xbcc2ca, 1.0, true),
   );
 
   const landingZoneMarkers = new Container();

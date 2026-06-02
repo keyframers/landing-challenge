@@ -32,11 +32,13 @@ import {
   updateLanderPhysics,
   emitLanderParticles,
   checkLanding,
+  loadLanderGraphics,
   type Lander,
 } from './lander';
 import {
   createRoverGraphics,
   drawRoverGraphics,
+  loadRoverGraphics,
   ROVER_WHEEL_OFFSETS,
   syncRoverGraphics,
   updateRoverPhysics,
@@ -133,6 +135,9 @@ export async function createGame(
     autoDensity: true,
   });
   onProgress?.(0.6);
+
+  await Promise.all([loadLanderGraphics(), loadRoverGraphics()]);
+  onProgress?.(0.75);
 
   const actor = createActor(
     gameMachine,
