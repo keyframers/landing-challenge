@@ -28,7 +28,6 @@ export default function HUD({
   missionNumber,
   totalMissions,
   onPause,
-  onInfo,
   onMissionSelect,
 }: HUDProps) {
   const angleDeg = Math.abs((angle * 180) / Math.PI) % 360;
@@ -50,10 +49,7 @@ export default function HUD({
           />
         </div>
         <div className={styles.topBarButtons}>
-          <Button onClick={onInfo} subtle>
-            Controls
-          </Button>
-          <Button onClick={onPause} className={styles.pauseButton}>
+          <Button onClick={onPause} subtle>
             ⏸
           </Button>
         </div>

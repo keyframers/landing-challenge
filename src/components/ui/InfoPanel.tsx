@@ -42,7 +42,7 @@ export default function InfoPanel({
           duration: 1.5,
           ease: "power4.out",
         },
-        0,
+        0
       );
 
       tl.from(
@@ -55,7 +55,7 @@ export default function InfoPanel({
           ease: "power3.out",
           stagger: 0.5,
         },
-        0,
+        0
       );
 
       let titleText = SplitText.create(`.${styles.titleText}`, {
@@ -71,7 +71,7 @@ export default function InfoPanel({
           ease: "expo.out",
           stagger: -0.05,
         },
-        "-=1.75",
+        "-=1.75"
       );
 
       tl.from(
@@ -85,11 +85,21 @@ export default function InfoPanel({
           ease: "expo.out",
           stagger: 0.1,
         },
-        "-=1.75",
+        "-=1.75"
       );
     },
-    { scope: panelRef },
+    { scope: panelRef }
   );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Enter" || e.code === "KeyA") {
+        onContinue();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onContinue]);
 
   return (
     <div ref={panelRef} className={styles.panel}>
@@ -118,10 +128,7 @@ export default function InfoPanel({
               </Button>
             )}
             {onExploreMissions && (
-              <Button
-                onClick={onExploreMissions}
-                className={styles.roverButton}
-              >
+              <Button onClick={onExploreMissions} className={styles.roverButton}>
                 Explore
               </Button>
             )}

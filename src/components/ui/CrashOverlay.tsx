@@ -36,6 +36,16 @@ export default function CrashOverlay({
       ? "The lander was destroyed on impact."
       : "You landed safely, but outside the designated zone.";
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Enter" || e.code === "KeyA") {
+        onRetry();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onRetry]);
+
   return (
     <div className={styles.overlay}>
       <div ref={ref} className={styles.content}>

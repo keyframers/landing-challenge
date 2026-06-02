@@ -1,5 +1,6 @@
 import { setup, assign, type AnyActorRef } from "xstate";
 import { missions, type MissionData } from "../data/missions";
+import { MAX_FUEL } from "../game/constants";
 
 export interface GameContext {
   currentMission: number;
@@ -57,7 +58,7 @@ export const gameMachine = setup({
     events: {} as GameEvent,
   },
   actions: {
-    resetFuel: assign({ fuel: (_) => 100 }),
+    resetFuel: assign({ fuel: (_) => MAX_FUEL }),
     markRestartRequested: assign({ restartRequested: true }),
     clearRestartRequested: assign({ restartRequested: false }),
     completeMission: assign({
@@ -147,7 +148,7 @@ export const gameMachine = setup({
   initial: "loading",
   context: {
     currentMission: 0,
-    fuel: 100,
+    fuel: MAX_FUEL,
     completedMissions: [],
     roverUnlocked: false,
     controlMode: "thrustAndTorque",

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import SplitText from "gsap/SplitText";
 
@@ -25,6 +25,16 @@ export default function TitleScreen({
   onExploreMissions,
 }: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Enter" || e.code === "KeyA") {
+        onLaunch();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onLaunch]);
 
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
