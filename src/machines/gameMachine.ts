@@ -13,6 +13,7 @@ export interface GameContext {
   angle: number;
   thrustLevel: number;
   browsePosition: number;
+  restartRequested: boolean;
 }
 
 export type GameEvent =
@@ -25,6 +26,8 @@ export type GameEvent =
   | { type: 'CRASHED' }
   | { type: 'MISSED' }
   | { type: 'RETRY' }
+  | { type: 'RESTART_MISSION' }
+  | { type: 'RESTARTED' }
   | { type: 'SIMULATE' }
   | { type: 'CONTINUE' }
   | { type: 'DRIVE_ROVER' }
@@ -54,6 +57,8 @@ export const gameMachine = setup({
   },
   actions: {
     resetFuel: assign({ fuel: (_) => 100 }),
+    markRestartRequested: assign({ restartRequested: true }),
+    clearRestartRequested: assign({ restartRequested: false }),
     completeMission: assign({
       completedMissions: ({ context, event }) => {
         const missionIndex =
@@ -146,9 +151,11 @@ export const gameMachine = setup({
     angle: 0,
     thrustLevel: 0,
     browsePosition: 0,
+    restartRequested: false,
   },
   on: {
     UPDATE_TELEMETRY: { actions: 'updateTelemetry' },
+    RESTARTED: { actions: 'clearRestartRequested' },
   },
   states: {
     loading: {
@@ -258,6 +265,10 @@ export const gameMachine = setup({
           on: {
             RESUME: {
               target: '#lunarLander.playing.hist',
+            },
+            RESTART_MISSION: {
+              target: '#lunarLander.playing.descending',
+              actions: 'markRestartRequested',
             },
             EXPLORE_MISSIONS: {
               target: '#lunarLander.manual',
