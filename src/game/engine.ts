@@ -753,13 +753,28 @@ export async function createGame(
     applyRenderMode();
 
     const state = actor.getSnapshot();
+    const isLanded = state.matches({ playing: "landed" });
 
     // Fade landing-zone indicators out as the lander closes in.
     if (vehicle && !vehicle.destroyed) {
       const t = vehicle.body.rigidBody.translation();
-      updateLandingZoneProximity(terrain, state.context.currentMission, t.x, t.y, camera.zoom);
+      updateLandingZoneProximity(
+        terrain,
+        state.context.currentMission,
+        t.x,
+        t.y,
+        camera.zoom,
+        isLanded
+      );
     } else {
-      updateLandingZoneProximity(terrain, state.context.currentMission, null, null, camera.zoom);
+      updateLandingZoneProximity(
+        terrain,
+        state.context.currentMission,
+        null,
+        null,
+        camera.zoom,
+        isLanded
+      );
     }
 
     // Clamp delta so a long stall (e.g. backgrounded tab) can't spiral physics.
