@@ -19,7 +19,7 @@
 }
 
 .title {
-  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-size: clamp(2rem, 7vw, 5rem);
   font-weight: 200;
   letter-spacing: 0.15em;
   color: #f4f4f5;
@@ -36,37 +36,7 @@
   align-items: center;
 }
 
-.primaryButton {
-  padding: 1rem 3rem;
-  font-size: 1rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #f4f4f5;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.3s;
-}
-
-.primaryButton:hover {
-  border-color: rgba(255, 204, 0, 0.8);
-  color: #ffcc00;
-}
-
 .secondaryButtonGroup {
   display: flex;
   gap: 1rem;
-}
-
-.secondaryButton {
-  padding: 0.6rem 1.5rem;
-  font-size: 0.8rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #888;
-  cursor: pointer;
-  border-radius: 2px;
 }

@@ -7,14 +7,11 @@ import styles from "./TitleScreen.module.css";
 import { CustomEase } from "gsap/CustomEase";
 import PhysicsPropsPlugin from "gsap/PhysicsPropsPlugin";
 import Physics2DPlugin from "gsap/Physics2DPlugin";
-import { Button } from "./Button";
-import { RoughEase } from "gsap/EasePack";
 
 gsap.registerPlugin(
   useGSAP,
   SplitText,
   CustomEase,
-  RoughEase,
   PhysicsPropsPlugin,
   Physics2DPlugin,
 );
@@ -36,43 +33,33 @@ export function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
 
       const tl = gsap.timeline();
 
-      tl.addLabel("title-start");
-
-      tl.from(
-        title.chars,
-        {
-          y: -80,
-          autoAlpha: 0,
-          rotationZ: "random(-10,10)",
-          rotationX: 40,
-          ease: CustomEase.create(
-            "custom",
-            "M0,0 C0.126,0.382 0.187,0.558 0.317,0.732 0.429,0.883 0.596,1.036 0.657,1 0.779,0.923 0.881,1 1,1 ",
-          ),
-          /*CustomEase.create(
+      tl.from(title.chars, {
+        // y: -80,
+        autoAlpha: 0,
+        rotationZ: "random(-10,10)",
+        rotationX: 40,
+        ease: CustomEase.create(
           "custom",
           "M0,0 C0.644,0.017 0.497,1.066 0.859,0.979 0.924,0.963 0.942,0.963 1,1 ",
-        )*/
-          // physicsProps: {
-          //   // x: { velocity: 10, acceleration: 20 },
-          //   y: { velocity: -50, acceleration: 10 },
-          // },
-          // physics2D: { velocity: 60, angle: -90, gravity: 100 },
-          duration: 4.5,
-          // scaleY: 0,
-          stagger: {
-            from: "edges", //"center",
-            amount: 0.8,
-          },
+        ),
+        physicsProps: {
+          // x: { velocity: 10, acceleration: 20 },
+          y: { velocity: -30, acceleration: 10 },
         },
-        "start",
-      );
+        // physics2D: { velocity: 60, angle: -90, gravity: 100 },
+        duration: 4,
+        // scaleY: 0,
+        stagger: {
+          from: "edges", //"center",
+          amount: 0.8,
+        },
+      });
 
       tl.to(
         title.chars,
         {
           duration: 1.5,
-          textShadow: "-1px 0.05em 0.1em orange, 1px 0.2em 0.2em red",
+          textShadow: "-1px 6px 5px orange, 1px 9px 8px red",
           stagger: {
             from: "edges", //"center",
             amount: 0.8,
@@ -86,10 +73,8 @@ randomize:true,
 clamp:false
 })`,
         },
-        "title-start",
+        "-=3.5",
       );
-
-      tl.addLabel("title-end");
 
       tl.to(
         title.chars,
@@ -109,43 +94,15 @@ randomize:true,
 clamp:false
 })`,
         },
-        "title-end-=2",
+        "-=1.25",
       );
 
-      const subtitleChars = SplitText.create(`.${styles.subtitle}`, {
-        type: "chars",
+      tl.from(`.${styles.subtitle}`, {
+        duration: 2,
+        autoAlpha: 0,
+        y: -10,
+        ease: "power3.out",
       });
-
-      tl.from(
-        subtitleChars.chars,
-        {
-          autoAlpha: 0,
-          y: -10,
-          rotationX: 85,
-          duration: 2,
-          stagger: {
-            from: "edges", //"center",
-            amount: 0.4,
-          },
-        },
-        "title-end-=1",
-      );
-
-      tl.fromTo(
-        `.${styles.buttonGroup} button`,
-        {
-          autoAlpha: 0,
-          y: 20,
-        },
-        {
-          y: 0,
-          duration: 1.5,
-          autoAlpha: 1,
-          ease: "power2.out",
-          stagger: 0.4,
-        },
-        "-=1.5",
-      );
     },
     { scope: containerRef },
   );
@@ -155,16 +112,16 @@ clamp:false
       <div className={styles.subtitle}>Explore the Apollo Missions</div>
       <h1 className={styles.title}>Lunar Landing</h1>
       <div className={styles.buttonGroup}>
-        <Button onClick={onLaunch} large>
+        <button onClick={onLaunch} className={styles.primaryButton}>
           Launch Mission
-        </Button>
+        </button>
         <div className={styles.secondaryButtonGroup}>
-          <Button onClick={onBrowse} subtle>
+          <button onClick={onBrowse} className={styles.secondaryButton}>
             Browse Missions
-          </Button>
-          <Button onClick={onInfo} subtle>
+          </button>
+          <button onClick={onInfo} className={styles.secondaryButton}>
             Controls
-          </Button>
+          </button>
         </div>
       </div>
     </div>
