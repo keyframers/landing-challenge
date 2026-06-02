@@ -168,11 +168,12 @@
 }
 
 .progressDot {
-  height: 6px;
+  height: 10px;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: all 0.3s;
   appearance: none;
+  border: none;
 }
 
 .progressDot.completed {
@@ -186,6 +187,6 @@
 }
 
 .progressDot.pending {
-  width: 6px;
+  width: 10px;
   background: rgba(255, 255, 255, 0.2);
 }

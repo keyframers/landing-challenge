@@ -3,7 +3,7 @@
   top: 8rem;
   right: 2rem;
   width: min(600px, 60vw);
-  background: rgba(10, 10, 20, 0.85);
+  background: var(--content-bg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 4px;
   padding: 2rem;
