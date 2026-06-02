@@ -55,7 +55,6 @@ import {
   LANDER_WIDTH,
   PIXELS_PER_METER,
   ROVER_HEIGHT,
-  ROVER_WIDTH,
   TELEMETRY_HZ,
   TERRAIN_TOTAL_WIDTH,
 } from './constants';
@@ -387,6 +386,45 @@ export async function createGame(
     vehicle.roverGfx.visible = mode === 'rover';
   }
 
+  /**
+   * Drop the rover onto the terrain directly below wherever the lander was,
+   * sitting flat against the slope (chassis rotated to match) at the
+   * suspension's rest ride height with zero velocity — so it settles in place
+   * instead of dropping in and bouncing.
+   */
+  function placeRoverOnTerrain() {
+    if (!vehicle) return;
+    const body = vehicle.body.rigidBody;
+    const x = body.translation().x;
+    const heights = terrain.surfaceHeights;
+    const surfaceY = getTerrainHeightAt(heights, x);
+    const leftH = getTerrainHeightAt(heights, x - 2);
+    const rightH = getTerrainHeightAt(heights, x + 2);
+    const slope = Math.atan2(rightH - leftH, 4);
+
+    // Resting suspension compression under the rover's own weight, so the
+    // wheels spawn already loaded and the chassis doesn't drop.
+    const mass = body.mass();
+    const restCompression = Math.min(
+      tuning.roverSuspensionLength,
+      (mass * Math.abs(tuning.gravity)) / 2 / tuning.roverSuspensionSpring,
+    );
+    const rideHeight =
+      ROVER_HEIGHT * 0.2 + (tuning.roverSuspensionLength - restCompression);
+
+    // Offset the chassis centre along the surface normal (chassis "up").
+    const upX = Math.sin(slope);
+    const upY = -Math.cos(slope);
+
+    body.setRotation(slope, true);
+    body.setTranslation(
+      { x: x + upX * rideHeight, y: surfaceY + upY * rideHeight },
+      true,
+    );
+    body.setLinvel({ x: 0, y: 0 }, true);
+    body.setAngvel(0, true);
+  }
+
   function placeVehicleLanded(missionIndex: number) {
     if (!vehicle) return;
     const target = getLandingTarget(missionIndex);
@@ -690,8 +728,10 @@ export async function createGame(
         break;
 
       case 'rover':
-        // Same entity — just change behaviour.
+        // Same entity — swap behaviour, then drop it onto the terrain right
+        // where the lander was, flat against the slope.
         setVehicleMode('rover');
+        placeRoverOnTerrain();
         break;
 
       case 'landed':
@@ -752,17 +792,6 @@ export async function createGame(
       fuel: vehicle.fuel,
       thrustLevel: vehicle.thrustLevel,
     });
-  }
-
-  function emitRoverBoostParticles() {
-    if (!vehicle || !vehicle.roverBoosting) return;
-
-    const body = vehicle.body.rigidBody;
-    const pos = body.translation();
-    const rot = body.rotation();
-    const leftEngineX = pos.x + Math.cos(rot) * (-ROVER_WIDTH / 2);
-    const leftEngineY = pos.y + Math.sin(rot) * (-ROVER_WIDTH / 2);
-    particles.emitThrust(leftEngineX, leftEngineY, rot + Math.PI / 2, 1);
   }
 
   app.ticker.add((ticker) => {
@@ -881,12 +910,6 @@ export async function createGame(
         accumulator -= FIXED_TIMESTEP;
       }
       syncVehicleGraphics();
-
-      particleTimer += delta;
-      if (particleTimer >= 0.03) {
-        emitRoverBoostParticles();
-        particleTimer = 0;
-      }
 
       telemetryTimer += delta;
       if (telemetryTimer >= TELEMETRY_INTERVAL) {

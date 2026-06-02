@@ -26,8 +26,11 @@
 }
 
 .controlsList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: center;
+  align-items: center;
+  column-gap: 1rem;
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -54,12 +57,11 @@
 }
 
 .controlRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  display: contents;
 }
 
 .keyBadge {
+  justify-self: end;
   background: rgba(255, 255, 255, 0.08);
   padding: 0.3rem 0.6rem;
   border-radius: 3px;
@@ -70,6 +72,8 @@
 }
 
 .controlDescription {
+  justify-self: start;
   font-size: 0.8rem;
   color: #888;
+  text-align: left;
 }

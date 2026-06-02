@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import styles from "./PauseOverlay.module.css";
 import Button from "./Button";
+import { useModalKeyboard } from "./useModalKeyboard";
 
 interface PauseOverlayProps {
   onResume: () => void;
@@ -16,9 +18,12 @@ export default function PauseOverlay({
   onExploreMissions,
   onControls,
 }: PauseOverlayProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  useModalKeyboard(ref);
+
   return (
     <div className={styles.overlay}>
-      <div className={styles.content}>
+      <div ref={ref} className={styles.content}>
         <div className={styles.title}>Paused</div>
         <div className={styles.buttonGroup}>
           <Button onClick={onResume}>Resume</Button>

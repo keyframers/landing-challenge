@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import styles from "./InfoDialog.module.css";
 import Button from "./Button";
+import { useModalKeyboard } from "./useModalKeyboard";
 
 interface InfoDialogProps {
   onClose: () => void;
@@ -9,6 +10,7 @@ interface InfoDialogProps {
 
 export default function InfoDialog({ onClose }: InfoDialogProps) {
   const ref = useRef<HTMLDivElement>(null);
+  useModalKeyboard(ref);
 
   useEffect(() => {
     if (!ref.current) return;

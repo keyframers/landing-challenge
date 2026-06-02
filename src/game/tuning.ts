@@ -17,7 +17,7 @@ export const tuning = {
   // Physics
   gravity: MOON_GRAVITY,
   mainEngineForce: 45000,
-  sideEngineTorque: 42000,
+  sideEngineTorque: 70000,
   fuelBurnMain: 4.75,
   fuelBurnSide: 1.15,
 
@@ -26,17 +26,18 @@ export const tuning = {
   maxLandingSpeed: MAX_LANDING_SPEED,
   maxLandingAngle: MAX_LANDING_ANGLE,
 
-  // Rover
-  roverAccel: 24,
-  roverMaxSpeed: 20,
-  roverAirTorque: 140,
-  roverDownforce: 700,
-  roverBoostForce: 620,
+  // Rover — forces in newtons (rover mass ~210kg), except *Speed (m/s) and
+  // roverGrip (m/s^2 of braking). See updateRoverPhysics for the model.
+  roverAccel: 1700,
+  roverMaxSpeed: 22,
+  roverGrip: 9,
+  roverAirTorque: 700,
+  roverDownforce: 600,
   roverWheelSpinSpeed: 14,
-  roverSuspensionLength: 1.35,
-  roverSuspensionSpring: 6500,
-  roverSuspensionDamping: 5200,
-  roverSuspensionMaxForce: 3500,
+  roverSuspensionLength: 1.4,
+  roverSuspensionSpring: 3000,
+  roverSuspensionDamping: 900,
+  roverSuspensionMaxForce: 4000,
 
   // Misc
   starterLaunchForce: 120000,

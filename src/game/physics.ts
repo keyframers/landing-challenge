@@ -119,7 +119,7 @@ export function replaceVehicleCollider(
       inertia,
       true,
     );
-    body.rigidBody.setAngularDamping(6);
+    body.rigidBody.setAngularDamping(3);
   } else {
     applyLanderMass(body.rigidBody);
     body.rigidBody.setAngularDamping(0.5);
