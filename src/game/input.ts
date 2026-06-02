@@ -1,13 +1,13 @@
 import { KONAMI_CODE } from './constants';
 
 export interface InputState {
-  left: boolean;
-  right: boolean;
-  up: boolean;
+  left: number;
+  right: number;
+  up: number;
 }
 
 export class InputManager {
-  state: InputState = { left: false, right: false, up: false };
+  state: InputState = { left: 0, right: 0, up: 0 };
   private konamiBuffer: string[] = [];
   private onKonami: (() => void) | null = null;
   private onAnyControl: (() => void) | null = null;
@@ -47,18 +47,19 @@ export class InputManager {
   };
 
   private mapKey(code: string, pressed: boolean) {
+    const value = pressed ? 1 : 0;
     switch (code) {
       case 'ArrowLeft':
       case 'KeyA':
-        this.state.left = pressed;
+        this.state.left = value;
         break;
       case 'ArrowRight':
       case 'KeyD':
-        this.state.right = pressed;
+        this.state.right = value;
         break;
       case 'ArrowUp':
       case 'KeyW':
-        this.state.up = pressed;
+        this.state.up = value;
         break;
     }
   }
@@ -78,8 +79,17 @@ export class InputManager {
   }
 
   setTouch(direction: 'left' | 'right' | 'up', pressed: boolean) {
-    this.state[direction] = pressed;
+    this.state[direction] = pressed ? 1 : 0;
     if (pressed) this.onAnyControl?.();
+  }
+
+  setAnalog(input: InputState) {
+    this.state.left = input.left;
+    this.state.right = input.right;
+    this.state.up = input.up;
+    if (input.left > 0 || input.right > 0 || input.up > 0) {
+      this.onAnyControl?.();
+    }
   }
 
   destroy() {

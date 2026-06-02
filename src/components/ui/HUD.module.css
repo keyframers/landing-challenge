@@ -4,6 +4,7 @@
   pointer-events: none;
 
   font-family: inherit;
+  font-variant-numeric: tabular-nums;
 
   > * {
     pointer-events: auto;
@@ -77,7 +78,6 @@
   font-size: 1.7rem;
   font-weight: 300;
   line-height: 1;
-  font-variant-numeric: tabular-nums;
 }
 
 .fuelValue.normal {
@@ -113,7 +113,6 @@
   font-size: 1.9rem;
   font-weight: 300;
   line-height: 1.05;
-  font-variant-numeric: tabular-nums;
 }
 
 .telemetryValue.normal {

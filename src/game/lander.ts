@@ -89,28 +89,32 @@ export function updateLanderPhysics(
 ) {
   if (lander.destroyed) return;
 
-  lander.leftEngineOn = input.left;
-  lander.rightEngineOn = input.right;
-  lander.mainEngineOn = input.up;
+  lander.leftEngineOn = input.left > 0;
+  lander.rightEngineOn = input.right > 0;
+  lander.mainEngineOn = input.up > 0;
 
   let fuelUsed = 0;
 
   if (lander.fuel > 0) {
-    if (lander.leftEngineOn && !lander.rightEngineOn) {
-      applyTorque(lander.body.rigidBody, -tuning.sideEngineTorque * dt);
-      fuelUsed += tuning.fuelBurnSide * dt;
-    }
-
-    if (lander.rightEngineOn && !lander.leftEngineOn) {
-      applyTorque(lander.body.rigidBody, tuning.sideEngineTorque * dt);
-      fuelUsed += tuning.fuelBurnSide * dt;
+    const torqueInput = input.right - input.left;
+    if (torqueInput !== 0) {
+      applyTorque(
+        lander.body.rigidBody,
+        torqueInput * tuning.sideEngineTorque * dt,
+      );
+      fuelUsed +=
+        Math.min(1, Math.abs(torqueInput)) * tuning.fuelBurnSide * dt;
     }
   }
 
   if (lander.mainEngineOn && lander.fuel > 0) {
-    applyThrust(lander.body.rigidBody, tuning.mainEngineForce * dt, { x: 0, y: -1 });
-    fuelUsed += tuning.fuelBurnMain * dt;
-    lander.thrustLevel = 1;
+    const thrust = Math.min(1, input.up);
+    applyThrust(lander.body.rigidBody, tuning.mainEngineForce * thrust * dt, {
+      x: 0,
+      y: -1,
+    });
+    fuelUsed += tuning.fuelBurnMain * thrust * dt;
+    lander.thrustLevel = thrust;
   } else {
     lander.thrustLevel = 0;
   }

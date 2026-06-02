@@ -720,7 +720,11 @@ export async function createGame(
     const state = actor.getSnapshot();
     if (state.matches({ playing: 'paused' })) {
       actor.send({ type: 'RESUME' });
-    } else if (typeof state.value === 'object' && 'playing' in state.value) {
+    } else if (
+      state.matches({ playing: 'descending' }) ||
+      state.matches({ playing: 'rover' }) ||
+      state.matches({ playing: 'simulatingLanding' })
+    ) {
       actor.send({ type: 'PAUSE' });
     }
   });
@@ -770,6 +774,7 @@ export async function createGame(
         state.context.currentMission,
         t.x,
         t.y,
+        camera.zoom,
       );
     } else {
       updateLandingZoneProximity(
@@ -777,6 +782,7 @@ export async function createGame(
         state.context.currentMission,
         null,
         null,
+        camera.zoom,
       );
     }
 

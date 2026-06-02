@@ -509,15 +509,19 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
       letterSpacing: 2,
     },
   });
-  label.anchor.set(0.5);
+  // Anchor to the horizontal center + baseline (bottom) so inverse-zoom scaling
+  // (see updateLandingZoneProximity) keeps the text fixed in screen size while
+  // its baseline stays pinned to the same world point.
+  label.anchor.set(0.5, 1);
+  label.label = 'lzLabel';
   label.x = w / 2;
-  label.y = -56;
+  label.y = -46;
   indicator.addChild(label);
 
   const chevron = new Graphics();
-  chevron.moveTo(w / 2 - 5, -42);
-  chevron.lineTo(w / 2, -34);
-  chevron.lineTo(w / 2 + 5, -42);
+  chevron.moveTo(w / 2 - 9, -42);
+  chevron.lineTo(w / 2, -33);
+  chevron.lineTo(w / 2 + 9, -42);
   chevron.stroke({ color, width: 1.5, alpha: 0.95 });
   indicator.addChild(chevron);
 
@@ -601,6 +605,7 @@ export function updateLandingZoneProximity(
   currentMission: number,
   landerX: number | null,
   landerY: number | null,
+  zoom = 1,
 ) {
   const markers = terrain.landingZoneMarkers.children;
   for (let i = 0; i < markers.length; i++) {
@@ -616,6 +621,11 @@ export function updateLandingZoneProximity(
     if (indicator) indicator.visible = active;
     if (!active) continue;
     if (!indicator) continue;
+
+    // Counter the camera zoom so the text holds a constant screen size; its
+    // baseline anchor keeps it pinned to the same world point as it scales.
+    const label = indicator.getChildByLabel('lzLabel');
+    if (label) label.scale.set(1 / zoom);
 
     if (landerX == null || landerY == null) {
       indicator.alpha = 1;

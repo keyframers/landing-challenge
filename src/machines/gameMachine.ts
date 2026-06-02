@@ -180,7 +180,6 @@ export const gameMachine = setup({
     playing: {
       initial: 'descending',
       on: {
-        PAUSE: '.paused',
         KONAMI: {
           target: '.rover',
           actions: 'unlockRover',
@@ -194,6 +193,7 @@ export const gameMachine = setup({
         descending: {
           entry: 'resetFuel',
           on: {
+            PAUSE: 'paused',
             LANDED: {
               target: 'landed',
               actions: 'completeMission',
@@ -248,6 +248,7 @@ export const gameMachine = setup({
 
         simulatingLanding: {
           on: {
+            PAUSE: 'paused',
             LANDED: {
               target: 'landed',
               actions: 'completeMission',
@@ -257,6 +258,7 @@ export const gameMachine = setup({
 
         rover: {
           on: {
+            PAUSE: 'paused',
             RETURN_TO_LANDER: 'descending',
           },
         },
