@@ -14,11 +14,13 @@ import {
 } from './physics';
 import {
   createTerrainSystem,
+  generateVisualForegroundHeightmap,
   getTerrainHeightAt,
   redrawTerrainSystem,
 } from './terrain';
 import {
   createCamera,
+  focusCamera,
   frameCamera,
   setCameraFramed,
   type Camera,
@@ -50,6 +52,7 @@ import {
   ROVER_HEIGHT,
   ROVER_WIDTH,
   TELEMETRY_HZ,
+  TERRAIN_TOTAL_WIDTH,
 } from './constants';
 import type RAPIER from '@dimforge/rapier2d-compat';
 
@@ -63,33 +66,25 @@ export interface Game {
 type VehicleMode = 'lander' | 'rover';
 type BrowserInspector = ReturnType<typeof createBrowserInspector>;
 type InspectWindow = Window & { __xstateInspector?: BrowserInspector };
+const RETURN_TO_LANDER_CLEARANCE = 1.5;
+const RETURN_TO_LANDER_BOOST_SPEED = 8;
+const RETURN_TO_LANDER_BOOST_IMPULSE = 90;
+const MANUAL_CAMERA_ZOOM = 1.4;
 
-function getInspector(): BrowserInspector | undefined {
-  const inspectWindow = window as InspectWindow;
-  const params = new URLSearchParams(window.location.search);
-  const enabled =
-    params.has('inspect') ||
-    window.localStorage.getItem('xstate.inspect') === '1';
-
-  if (!enabled) return undefined;
-
-  inspectWindow.__xstateInspector ??= createBrowserInspector({
-    filter: (event) => {
-      if (event.type === '@xstate.event') {
-        return event.event.type !== 'UPDATE_TELEMETRY';
-      }
-      if (event.type === '@xstate.snapshot') {
-        return event.event.type !== 'UPDATE_TELEMETRY';
-      }
-      return true;
-    },
-    maxDeferredEvents: 50,
-    url: 'https://editor.stately.ai',
-  });
-
-  return inspectWindow.__xstateInspector;
-}
-
+const inspector = createBrowserInspector({
+  filter: (event) => {
+    if (event.type === '@xstate.event') {
+      return event.event.type !== 'UPDATE_TELEMETRY';
+    }
+    if (event.type === '@xstate.snapshot') {
+      return event.event.type !== 'UPDATE_TELEMETRY';
+    }
+    return true;
+  },
+  maxDeferredEvents: 50,
+  url: 'https://editor.stately.ai',
+  autoStart: false,
+});
 /**
  * A single persistent entity. Switching between lander and rover only changes
  * behaviour — never the body — so there's no spawn/despawn dance:
@@ -137,7 +132,6 @@ export async function createGame(
   });
   onProgress?.(0.6);
 
-  const inspector = getInspector();
   const actor = createActor(
     gameMachine,
     inspector ? { inspect: inspector.inspect } : undefined,
@@ -148,14 +142,18 @@ export async function createGame(
   const starContainer = new Container();
   const terrainContainer = new Container();
   const entityContainer = new Container();
+  const staticLanderContainer = new Container();
   const particleContainer = new Container();
+  const foregroundTerrainContainer = new Container();
   const uiWorldContainer = new Container();
 
   app.stage.addChild(starContainer);
   app.stage.addChild(worldContainer);
   worldContainer.addChild(terrainContainer);
+  worldContainer.addChild(staticLanderContainer);
   worldContainer.addChild(entityContainer);
   worldContainer.addChild(particleContainer);
+  worldContainer.addChild(foregroundTerrainContainer);
   worldContainer.addChild(uiWorldContainer);
 
   const starfield = createStarfield(app.screen.width, app.screen.height);
@@ -167,21 +165,43 @@ export async function createGame(
   starContainer.addChild(earth);
 
   const terrain = createTerrainSystem();
-  for (const layer of terrain.layers) {
+  const foregroundVisualLayer = terrain.layers.at(-1);
+  for (const layer of terrain.layers.slice(0, -1)) {
     terrainContainer.addChild(layer.container);
+  }
+  if (foregroundVisualLayer) {
+    foregroundTerrainContainer.addChild(foregroundVisualLayer.container);
   }
   uiWorldContainer.addChild(terrain.landingZoneMarkers);
 
   let vehicle: Vehicle | null = null;
   let lastWireframe = tuning.wireframe;
+  let lastForegroundJaggedness = tuning.foregroundJaggedness;
 
   function applyRenderMode(force = false) {
-    if (!force && lastWireframe === tuning.wireframe) return;
+    const jaggednessChanged =
+      lastForegroundJaggedness !== tuning.foregroundJaggedness;
+    if (!force && lastWireframe === tuning.wireframe && !jaggednessChanged)
+      return;
     lastWireframe = tuning.wireframe;
+    lastForegroundJaggedness = tuning.foregroundJaggedness;
+
+    if (force || jaggednessChanged) {
+      terrain.visualForegroundHeights = generateVisualForegroundHeightmap(
+        TERRAIN_TOTAL_WIDTH,
+        terrain.surfaceHeights,
+        tuning.foregroundJaggedness,
+      );
+      const foregroundVisualLayer = terrain.layers.at(-1);
+      if (foregroundVisualLayer) {
+        foregroundVisualLayer.heights = terrain.visualForegroundHeights;
+      }
+    }
 
     starContainer.visible = !tuning.wireframe;
     app.renderer.background.color = tuning.wireframe ? 0x000000 : 0x0a0a14;
     redrawTerrainSystem(terrain);
+    buildStaticLanders();
 
     if (vehicle) {
       drawLanderGraphics(vehicle.landerGfx);
@@ -224,6 +244,51 @@ export async function createGame(
     const y = getTerrainHeightAt(terrain.foregroundHeights, x);
     return { x, y };
   }
+
+  function getManualBrowseTarget(position: number): { x: number; y: number } {
+    const first = getLandingTarget(0);
+    const last = getLandingTarget(missions.length - 1);
+    const x = first.x + (last.x - first.x) * position;
+    const y = getTerrainHeightAt(terrain.foregroundHeights, x) - 26;
+    return { x, y };
+  }
+
+  function updateManualMissionInView() {
+    let visibleMission = actor.getSnapshot().context.currentMission;
+    let closest = Infinity;
+
+    for (let i = 0; i < missions.length; i++) {
+      const target = getLandingTarget(i);
+      const screenFraction =
+        0.5 +
+        ((target.x * PIXELS_PER_METER - camera.x) * camera.zoom) /
+          camera.screenWidth;
+      if (screenFraction < 0.25 || screenFraction > 0.75) continue;
+      const distance = Math.abs(screenFraction - 0.5);
+      if (distance < closest) {
+        closest = distance;
+        visibleMission = i;
+      }
+    }
+
+    if (visibleMission !== actor.getSnapshot().context.currentMission) {
+      actor.send({ type: 'SET_MANUAL_MISSION', missionIndex: visibleMission });
+    }
+  }
+
+  function buildStaticLanders() {
+    staticLanderContainer.removeChildren();
+    for (let i = 0; i < missions.length; i++) {
+      const target = getLandingTarget(i);
+      const lander = createLanderGraphics();
+      lander.x = target.x * PIXELS_PER_METER;
+      lander.y = (target.y - LANDER_HEIGHT / 2) * PIXELS_PER_METER;
+      staticLanderContainer.addChild(lander);
+    }
+  }
+
+  buildStaticLanders();
+  staticLanderContainer.visible = false;
 
   function getMissionSpawn(missionIndex: number): { x: number; y: number } {
     const mission = missions[missionIndex];
@@ -316,6 +381,29 @@ export async function createGame(
     vehicle.destroyed = false;
     vehicle.thrustLevel = 0;
     setVehicleMode('lander');
+  }
+
+  function boostLanderFromGround() {
+    if (!vehicle) return;
+    const body = vehicle.body.rigidBody;
+    const pos = body.translation();
+    const vel = body.linvel();
+    const terrainH = getTerrainHeightAt(terrain.surfaceHeights, pos.x);
+    body.setTranslation(
+      {
+        x: pos.x,
+        y: terrainH - LANDER_HEIGHT / 2 - RETURN_TO_LANDER_CLEARANCE,
+      },
+      true,
+    );
+    body.setRotation(0, true);
+    body.setLinvel(
+      { x: vel.x, y: Math.min(vel.y, -RETURN_TO_LANDER_BOOST_SPEED) },
+      true,
+    );
+    body.setAngvel(0, true);
+    applyThrust(body, RETURN_TO_LANDER_BOOST_IMPULSE, { x: 0, y: -1 });
+    vehicle.thrustLevel = 1;
   }
 
   function startSimulatedLanding(missionIndex: number) {
@@ -592,9 +680,7 @@ export async function createGame(
             vehicle.destroyed = false;
             setVehicleMode('lander');
             if (prev === 'rover') {
-              const vel = vehicle.body.rigidBody.linvel();
-              vehicle.body.rigidBody.setLinvel({ x: vel.x, y: 0 }, true);
-              vehicle.body.rigidBody.setAngvel(0, true);
+              boostLanderFromGround();
             }
           }
         } else {
@@ -758,7 +844,6 @@ export async function createGame(
       world.gravity = { x: 0, y: tuning.gravity };
       accumulator += delta;
       while (accumulator >= FIXED_TIMESTEP) {
-        updateGrounded();
         updateRoverPhysics(
           vehicle as unknown as Rover,
           input.state,
@@ -768,7 +853,6 @@ export async function createGame(
         world.step();
         accumulator -= FIXED_TIMESTEP;
       }
-      updateGrounded();
       syncVehicleGraphics();
 
       particleTimer += delta;
@@ -795,10 +879,20 @@ export async function createGame(
   });
 
   function applyCamera(state: any, playing: string | null) {
-    if (vehicle && !vehicle.destroyed) {
+    staticLanderContainer.visible = state.matches?.('manual') === true;
+
+    if (state.matches?.('manual')) {
+      const target = getManualBrowseTarget(state.context.browsePosition);
+      focusCamera(camera, target.x, target.y, MANUAL_CAMERA_ZOOM, 0.5, 0.58);
+      updateManualMissionInView();
+    } else if (vehicle && !vehicle.destroyed) {
       const pos = vehicle.body.rigidBody.translation();
-      const target = getLandingTarget(state.context.currentMission);
-      frameCamera(camera, pos.x, pos.y, target.x, target.y);
+      if (playing === 'rover') {
+        focusCamera(camera, pos.x, pos.y, 2.2, 0.5, 0.56);
+      } else {
+        const target = getLandingTarget(state.context.currentMission);
+        frameCamera(camera, pos.x, pos.y, target.x, target.y);
+      }
     }
 
     const sw = app.screen.width;
@@ -840,11 +934,7 @@ export async function createGame(
       transit = null;
       simulatedLanding = null;
       particles.destroy();
-      app.ticker.stop();
-      app.destroy(
-        { removeView: false },
-        { children: true, texture: false, textureSource: false, context: false },
-      );
+      app.destroy(true);
     },
   };
 }

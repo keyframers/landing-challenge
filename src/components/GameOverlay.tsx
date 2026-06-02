@@ -28,6 +28,8 @@ function useActorState(actor: Actor<typeof gameMachine>) {
 export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
   const state = useActorState(actor);
   const ctx = state.context;
+  const touchXRef = useRef<number | null>(null);
+  const touchYRef = useRef<number | null>(null);
 
   const currentMission = missions[ctx.currentMission];
   const speed = Math.sqrt(ctx.velocity.x ** 2 + ctx.velocity.y ** 2);
@@ -49,6 +51,13 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
     if (state.matches({ playing: "paused" })) return "Paused";
     if (state.matches("manual")) return "Browse Mode";
     return "";
+  }
+
+  function sendBrowseDelta(delta: number) {
+    actor.send({
+      type: "SCROLL",
+      position: Math.max(0, Math.min(1, ctx.browsePosition + delta / 2400)),
+    });
   }
 
   if (state.matches("loading")) {
@@ -116,10 +125,9 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
           {state.matches({ playing: "paused" }) && (
             <PauseOverlay
               onResume={() => actor.send({ type: "RESUME" })}
-              onQuit={() => {
-                actor.send({ type: "RESUME" });
-                // TODO: quit to title
-              }}
+              onExploreMissions={() =>
+                actor.send({ type: "EXPLORE_MISSIONS" })
+              }
             />
           )}
 
@@ -189,29 +197,52 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
 
       {state.matches("manual") && (
         <div
+          onWheel={(event) => {
+            event.preventDefault();
+            sendBrowseDelta(event.deltaY + event.deltaX);
+          }}
+          onTouchStart={(event) => {
+            const touch = event.touches[0];
+            touchXRef.current = touch?.clientX ?? null;
+            touchYRef.current = touch?.clientY ?? null;
+          }}
+          onTouchMove={(event) => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            if (
+              touch == null ||
+              touchXRef.current == null ||
+              touchYRef.current == null
+            ) {
+              return;
+            }
+            const dx = touchXRef.current - touch.clientX;
+            const dy = touchYRef.current - touch.clientY;
+            touchXRef.current = touch.clientX;
+            touchYRef.current = touch.clientY;
+            sendBrowseDelta(dx + dy);
+          }}
           style={{
             position: "absolute",
-            bottom: "2rem",
-            left: "50%",
-            transform: "translateX(-50%)",
+            inset: 0,
             pointerEvents: "auto",
-            textAlign: "center",
+            touchAction: "none",
           }}
         >
-          <div
-            style={{
-              fontSize: "0.7rem",
-              letterSpacing: "0.15em",
-              color: "#666",
-              marginBottom: "0.5rem",
-              textTransform: "uppercase",
-            }}
-          >
-            Scroll to browse · Press any control to fly
-          </div>
+          {currentMission && (
+            <InfoPanel
+              key={currentMission.id}
+              mission={currentMission}
+              onContinue={() => actor.send({ type: "CONTROLS_PRESSED" })}
+              showRoverButton={false}
+            />
+          )}
           <button
             onClick={() => actor.send({ type: "EXIT_MANUAL" })}
             style={{
+              position: "absolute",
+              right: "2rem",
+              bottom: "2rem",
               padding: "0.5rem 1.5rem",
               fontSize: "0.75rem",
               letterSpacing: "0.15em",

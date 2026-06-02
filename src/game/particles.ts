@@ -157,7 +157,6 @@ export class ParticleSystem {
       p.graphic.destroy();
     }
     this.particles = [];
-    this.container.parent?.removeChild(this.container);
     this.container.destroy();
   }
 }

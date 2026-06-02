@@ -38,7 +38,7 @@
   background: transparent;
   cursor: pointer;
   border-radius: 2px;
-  width: 200px;
+  min-width: 240px;
 }
 
 .primaryButton {

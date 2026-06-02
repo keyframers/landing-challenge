@@ -1,5 +1,5 @@
 export const PIXELS_PER_METER = 10;
-export const MOON_GRAVITY = 1.62;
+export const MOON_GRAVITY = 1.624;
 export const FIXED_TIMESTEP = 1 / 60;
 
 export const LANDER_WIDTH = 4;
@@ -34,6 +34,7 @@ export const STARFIELD_COUNT = 200;
 
 export const ROVER_WIDTH = 3;
 export const ROVER_HEIGHT = 1.5;
+export const LUNAR_ROVER_MASS = 210;
 export const ROVER_ACCEL = 30;
 export const ROVER_MAX_SPEED = 15;
 export const ROVER_AIR_TORQUE = 40;

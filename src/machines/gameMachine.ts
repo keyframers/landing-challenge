@@ -12,6 +12,7 @@ export interface GameContext {
   altitude: number;
   angle: number;
   thrustLevel: number;
+  browsePosition: number;
 }
 
 export type GameEvent =
@@ -31,7 +32,10 @@ export type GameEvent =
   | { type: 'RETURN_TO_LANDER' }
   | { type: 'PAUSE' }
   | { type: 'RESUME' }
+  | { type: 'EXPLORE_MISSIONS' }
   | { type: 'SCROLL'; position: number }
+  | { type: 'SET_MANUAL_MISSION'; missionIndex: number }
+  | { type: 'JUMP_TO_MISSION'; missionIndex: number }
   | { type: 'CONTROLS_PRESSED' }
   | { type: 'EXIT_MANUAL' }
   | { type: 'KONAMI' }
@@ -73,6 +77,22 @@ export const gameMachine = setup({
     setMission: assign({
       currentMission: ({ event }) => {
         if (event.type !== 'JUMP_TO_MISSION') return 0;
+        return event.missionIndex;
+      },
+    }),
+    resetManualBrowse: assign({
+      currentMission: 0,
+      browsePosition: 0,
+    }),
+    setBrowsePosition: assign({
+      browsePosition: ({ event, context }) => {
+        if (event.type !== 'SCROLL') return context.browsePosition;
+        return Math.max(0, Math.min(1, event.position));
+      },
+    }),
+    setManualMission: assign({
+      currentMission: ({ event, context }) => {
+        if (event.type !== 'SET_MANUAL_MISSION') return context.currentMission;
         return event.missionIndex;
       },
     }),
@@ -126,6 +146,7 @@ export const gameMachine = setup({
     altitude: 0,
     angle: 0,
     thrustLevel: 0,
+    browsePosition: 0,
   },
   on: {
     UPDATE_TELEMETRY: { actions: 'updateTelemetry' },
@@ -138,7 +159,10 @@ export const gameMachine = setup({
     title: {
       on: {
         LAUNCH: 'playing',
-        BROWSE: 'manual',
+        BROWSE: {
+          target: 'manual',
+          actions: 'resetManualBrowse',
+        },
         INFO: 'info',
       },
     },
@@ -230,6 +254,13 @@ export const gameMachine = setup({
             RESUME: {
               target: '#lunarLander.playing.hist',
             },
+            EXPLORE_MISSIONS: {
+              target: '#lunarLander.manual',
+              actions: 'resetManualBrowse',
+            },
+            SIMULATE: {
+              target: '#lunarLander.playing.simulatingLanding',
+            },
           },
         },
 
@@ -242,6 +273,12 @@ export const gameMachine = setup({
 
     manual: {
       on: {
+        SCROLL: {
+          actions: 'setBrowsePosition',
+        },
+        SET_MANUAL_MISSION: {
+          actions: 'setManualMission',
+        },
         CONTROLS_PRESSED: 'playing',
         EXIT_MANUAL: 'title',
       },

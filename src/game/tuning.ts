@@ -1,4 +1,8 @@
-import { MAX_LANDING_SPEED, MAX_LANDING_ANGLE } from './constants';
+import {
+  MAX_LANDING_SPEED,
+  MAX_LANDING_ANGLE,
+  MOON_GRAVITY,
+} from './constants';
 
 /**
  * Live-tweakable game parameters. The engine reads from this object every frame
@@ -11,7 +15,7 @@ import { MAX_LANDING_SPEED, MAX_LANDING_ANGLE } from './constants';
  */
 export const tuning = {
   // Physics
-  gravity: 1.62,
+  gravity: MOON_GRAVITY,
   mainEngineForce: 130,
   sideEngineTorque: 120,
   fuelBurnMain: 2,
@@ -23,16 +27,16 @@ export const tuning = {
   maxLandingAngle: MAX_LANDING_ANGLE,
 
   // Rover
-  roverAccel: 360,
-  roverMaxSpeed: 24,
+  roverAccel: 32,
+  roverMaxSpeed: 28,
   roverAirTorque: 140,
   roverDownforce: 120,
-  roverBoostForce: 500,
+  roverBoostForce: 620,
   roverWheelSpinSpeed: 14,
-  roverSuspensionLength: 1.0,
-  roverSuspensionSpring: 520,
-  roverSuspensionDamping: 220,
-  roverSuspensionMaxForce: 900,
+  roverSuspensionLength: 1.2,
+  roverSuspensionSpring: 14000,
+  roverSuspensionDamping: 2400,
+  roverSuspensionMaxForce: 6000,
 
   // Misc
   transitLaunchForce: 650,
@@ -43,6 +47,7 @@ export const tuning = {
   transitHandOffDistance: 120,
   transitHandOffVerticalSpeed: 14,
   transitMaxSeconds: 20,
+  foregroundJaggedness: 1,
   wireframe: true,
   showDebugBounds: false,
 };

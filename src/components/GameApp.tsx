@@ -37,6 +37,7 @@ export function GameApp() {
     transitHandOffDistance: { value: tuning.transitHandOffDistance, min: 20, max: 400, step: 5 },
     transitHandOffVerticalSpeed: { value: tuning.transitHandOffVerticalSpeed, min: 2, max: 60, step: 1 },
     transitMaxSeconds: { value: tuning.transitMaxSeconds, min: 1, max: 30, step: 0.5 },
+    foregroundJaggedness: { value: tuning.foregroundJaggedness, min: 0, max: 3, step: 0.05 },
     wireframe: { value: tuning.wireframe },
     showDebugBounds: { value: tuning.showDebugBounds },
   });
@@ -48,34 +49,25 @@ export function GameApp() {
 
     let destroyed = false;
 
-    let loadedTimeout: number | undefined;
-
-    setLoadingProgress(0);
-
     createGame(canvasRef.current, (pct) => {
       if (!destroyed) setLoadingProgress(pct);
-    })
-      .then((g) => {
-        if (destroyed) {
-          g.destroy();
-          return;
-        }
-        gameRef.current = g;
-        (window as any).__actor = g.actor;
-        (window as any).__game = g;
-        setGame(g);
+    }).then((g) => {
+      if (destroyed) {
+        g.destroy();
+        return;
+      }
+      gameRef.current = g;
+      (window as any).__actor = g.actor;
+      (window as any).__game = g;
+      setGame(g);
 
-        loadedTimeout = window.setTimeout(() => {
-          if (!destroyed) g.actor.send({ type: 'LOADED' });
-        }, 500);
-      })
-      .catch((error) => {
-        console.error('Failed to create game', error);
-      });
+      setTimeout(() => {
+        g.actor.send({ type: 'LOADED' });
+      }, 500);
+    });
 
     return () => {
       destroyed = true;
-      if (loadedTimeout != null) window.clearTimeout(loadedTimeout);
       gameRef.current?.destroy();
       gameRef.current = null;
     };
