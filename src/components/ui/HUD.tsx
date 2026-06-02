@@ -37,7 +37,9 @@ export default function HUD({
     <div className={styles.container}>
       {/* Top bar */}
       <div className={styles.topBar}>
-        <div className={styles.logo}>Lunar Landing</div>
+        <div className={styles.logo} onClick={() => window.location.reload()}>
+          Lunar Landing
+        </div>
         <div className={styles.missionInfo}>
           <div className={styles.missionLabel}>
             Mission {missionNumber} / {totalMissions}

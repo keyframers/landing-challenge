@@ -33,6 +33,11 @@
   color: #888;
   font-family: var(--font-family-heading);
   font-weight: 700;
+  cursor: pointer;
+  transition: color 0.3s linear;
+}
+.logo:hover {
+  color: var(--accent);
 }
 
 .missionInfo {
