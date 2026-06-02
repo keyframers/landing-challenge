@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import type { MissionData } from "../../data/missions";
 import styles from "./InfoPanel.module.css";
+import SplitText from "gsap/SplitText";
 
 interface InfoPanelProps {
   mission: MissionData;
@@ -10,6 +11,8 @@ interface InfoPanelProps {
   showRoverButton: boolean;
 }
 import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(useGSAP, SplitText);
 
 export function InfoPanel({
   mission,
@@ -24,20 +27,46 @@ export function InfoPanel({
     () => {
       if (!panelRef.current) return;
 
-      gsap.from(`.${styles.panelBackground}`, {
-        transformOrigin: "top center",
-        scaleY: 0,
-        duration: 2,
-        ease: "expo.out",
-      });
+      const tl = gsap.timeline();
 
-      gsap.from(`.${styles.titleLine}`, {
-        transformOrigin: "center left",
-        scaleX: 0,
-        duration: 2,
-        ease: "expo.out",
-        stagger: 0.5,
+      tl.from(
+        `.${styles.panelBackground}`,
+        {
+          transformOrigin: "top center",
+          scaleY: 0,
+          duration: 2,
+          ease: "power4.out",
+        },
+        0,
+      );
+
+      tl.from(
+        `.${styles.titleLine}`,
+        {
+          transformOrigin: "center right",
+          scaleX: 0,
+          duration: 2,
+          ease: "power3.out",
+          stagger: 0.5,
+        },
+        0,
+      );
+
+      let titleText = SplitText.create(`.${styles.titleText}`, {
+        type: "chars",
       });
+      tl.from(
+        titleText.chars,
+        {
+          // x: -80,
+          // autoAlpha: 0,
+          y: "100%",
+          transformOrigin: "bottom center",
+          ease: "expo.out",
+          stagger: -0.05,
+        },
+        "-=1.75",
+      );
     },
     { scope: panelRef },
   );
@@ -68,15 +97,6 @@ export function InfoPanel({
           >
             <div className={styles.carouselCaption}>{img.caption}</div>
           </div>
-        ))}
-      </div>
-
-      <div className={styles.dots}>
-        {mission.images.map((_, i) => (
-          <div
-            key={i}
-            className={`${styles.dot} ${i === carouselIndex ? styles.active : styles.inactive}`}
-          />
         ))}
       </div>
 

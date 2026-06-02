@@ -44,6 +44,8 @@
   margin-bottom: -0.16em;
   position: relative;
   z-index: 2;
+  height: 1lh;
+  overflow: hidden;
 }
 
 .titleLine {
