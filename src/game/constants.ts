@@ -12,9 +12,9 @@ export const MAX_LANDING_ANGLE = Math.PI / 12; // 15 degrees
 export const MAIN_ENGINE_FORCE = 130;
 export const SIDE_ENGINE_FORCE = 50;
 export const SIDE_ENGINE_TORQUE = 80;
-export const FUEL_BURN_RATE_MAIN = 2;
-export const FUEL_BURN_RATE_SIDE = 1;
-export const MAX_FUEL = 150;
+export const FUEL_BURN_RATE_MAIN = 1;
+export const FUEL_BURN_RATE_SIDE = 0.5;
+export const MAX_FUEL = 100;
 
 export const CAMERA_LERP_SPEED = 0.15;
 
