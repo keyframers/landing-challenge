@@ -38,8 +38,8 @@ export default function InfoPanel({
         {
           transformOrigin: "top center",
           y: "-100%",
-          skewY: -20,
-          duration: 2,
+          skewY: -10,
+          duration: 1.5,
           ease: "power4.out",
         },
         0,
@@ -73,6 +73,20 @@ export default function InfoPanel({
         },
         "-=1.75",
       );
+
+      tl.from(
+        `.${styles.missionDetails} > *`,
+        {
+          // x: -80,
+          autoAlpha: 0,
+          duration: 2,
+          y: "20%",
+          transformOrigin: "bottom center",
+          ease: "expo.out",
+          stagger: 0.1,
+        },
+        "-=1.75",
+      );
     },
     { scope: panelRef },
   );
@@ -89,26 +103,32 @@ export default function InfoPanel({
           <span className={styles.titleLine} />
           <span className={styles.titleLine} />
         </h2>
-        <div className={styles.date}>{mission.date}</div>
-        <p className={styles.description}>{mission.description}</p>
 
-        <InfoPanelLabel>Crew</InfoPanelLabel>
-        <div className={styles.crew}>{mission.crew.join(" · ")}</div>
+        <div className={styles.missionDetails}>
+          <div className={styles.date}>{mission.date}</div>
+          <p className={styles.description}>{mission.description}</p>
 
-        <div className={styles.buttonGroup}>
-          {showRoverButton && (
-            <Button onClick={onDriveRover} className={styles.roverButton}>
-              Drive Rover
+          <InfoPanelLabel>Crew</InfoPanelLabel>
+          <div className={styles.crew}>{mission.crew.join(" · ")}</div>
+
+          <div className={styles.buttonGroup}>
+            {showRoverButton && (
+              <Button onClick={onDriveRover} className={styles.roverButton}>
+                Drive Rover
+              </Button>
+            )}
+            {onExploreMissions && (
+              <Button
+                onClick={onExploreMissions}
+                className={styles.roverButton}
+              >
+                Explore
+              </Button>
+            )}
+            <Button onClick={onContinue} className={styles.continueButton}>
+              Continue →
             </Button>
-          )}
-          {onExploreMissions && (
-            <Button onClick={onExploreMissions} className={styles.roverButton}>
-              Explore
-            </Button>
-          )}
-          <Button onClick={onContinue} className={styles.continueButton}>
-            Continue →
-          </Button>
+          </div>
         </div>
       </div>
 
