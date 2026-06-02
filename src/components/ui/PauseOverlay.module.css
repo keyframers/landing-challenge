@@ -26,8 +26,9 @@
 .buttonGroup {
   display: flex;
   flex-direction: column;
+  justify-items: stretch;
+  align-items: stretch;
   gap: 0.8rem;
-  align-items: center;
 }
 
 .button {

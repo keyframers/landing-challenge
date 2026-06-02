@@ -42,7 +42,9 @@ export default function CrashOverlay({
         <div className={styles.title}>{title}</div>
         <p className={styles.subtitle}>{subtitle}</p>
         <div className={styles.buttonGroup}>
-          <Button onClick={onRetry}>Try Again</Button>
+          <Button onClick={onRetry} large>
+            Try Again
+          </Button>
           <Button onClick={onSimulate} subtle>
             Simulate Landing
           </Button>

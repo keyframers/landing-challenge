@@ -21,7 +21,9 @@ export default function PauseOverlay({
       <div className={styles.content}>
         <div className={styles.title}>Paused</div>
         <div className={styles.buttonGroup}>
-          <Button onClick={onResume}>Resume</Button>
+          <Button onClick={onResume} large>
+            Resume
+          </Button>
           <Button onClick={onRestart} subtle>
             Restart
           </Button>

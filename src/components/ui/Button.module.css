@@ -25,6 +25,7 @@
 .root:hover {
   border-color: var(--accent);
   color: var(--accent);
+  background: var(--dark);
 }
 
 .root:hover::before {
@@ -42,7 +43,6 @@
 }
 
 .root[data-subtle="true"]:hover {
-  background: var(--dark);
   border-color: var(--text-color);
   color: var(--text-color);
 }
