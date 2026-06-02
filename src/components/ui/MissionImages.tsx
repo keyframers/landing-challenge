@@ -13,10 +13,7 @@ interface MissionImagesProps {
   className?: string;
 }
 
-export default function MissionImages({
-  mission,
-  className,
-}: MissionImagesProps) {
+export default function MissionImages({ mission, className }: MissionImagesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -24,24 +21,17 @@ export default function MissionImages({
       gsap.from(`.${styles.image}`, {
         opacity: 0,
         duration: 1,
-        stagger: 0.1,
-        // scrollTrigger: {
-        //   scroller: containerRef.current,
-        //   trigger: `.${styles.image}`,
-        //   start: "top top",
-        //   end: "bottom bottom",
-        //   scrub: 1,
-        // },
+        stagger: -0.2,
       });
 
       gsap.from(`.${styles.image}`, {
         background: "red",
         duration: 1,
         delay: 0.5,
-        stagger: 0.4,
+        stagger: -0.2,
       });
     },
-    { scope: containerRef },
+    { scope: containerRef }
   );
 
   return (

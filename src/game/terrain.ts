@@ -11,16 +11,16 @@ import {
   TERRAIN_BASE_HEIGHT,
   TERRAIN_AMPLITUDE,
   PIXELS_PER_METER,
-} from './constants';
-import { missions } from '../data/missions';
-import { tuning } from './tuning';
+} from "./constants";
+import { missions } from "../data/missions";
+import { tuning } from "./tuning";
 
 const WIREFRAME_COLOR = 0xffffff;
 const FOREGROUND_TOP = 0xcdcdd2;
 const FOREGROUND_BOTTOM = 0x343946;
 const VISUAL_FOREGROUND_FILL = 0x4c5260;
 
-type TerrainRenderMode = 'flat' | 'mainGradient' | 'foregroundDark';
+type TerrainRenderMode = "flat" | "mainGradient" | "foregroundDark";
 
 export interface TerrainLayer {
   container: Container;
@@ -47,11 +47,9 @@ export function generateHeightmap(
   totalWidth: number,
   roughness: number,
   landingZones: LandingZone[],
-  seed?: number,
+  seed?: number
 ): number[] {
-  const noise2D = createNoise2D(
-    seed != null ? seededRandom(seed * 2147483647) : undefined,
-  );
+  const noise2D = createNoise2D(seed != null ? seededRandom(seed * 2147483647) : undefined);
   const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
   const heights: number[] = [];
 
@@ -70,8 +68,7 @@ export function generateHeightmap(
   for (const zone of landingZones) {
     const startIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
     const endIdx = Math.ceil((zone.x + zone.width) / TERRAIN_SEGMENT_SIZE);
-    const zoneHeight =
-      heights[Math.floor((startIdx + endIdx) / 2)] ?? TERRAIN_BASE_HEIGHT;
+    const zoneHeight = heights[Math.floor((startIdx + endIdx) / 2)] ?? TERRAIN_BASE_HEIGHT;
 
     for (let i = startIdx; i <= endIdx && i < heights.length; i++) {
       heights[i] = zoneHeight;
@@ -117,8 +114,7 @@ function smoothHeights(heights: number[], passes = 2) {
   for (let pass = 0; pass < passes; pass++) {
     const next = heights.slice();
     for (let i = 1; i < heights.length - 1; i++) {
-      next[i] =
-        heights[i - 1] * 0.25 + heights[i] * 0.5 + heights[i + 1] * 0.25;
+      next[i] = heights[i - 1] * 0.25 + heights[i] * 0.5 + heights[i + 1] * 0.25;
     }
     heights.splice(0, heights.length, ...next);
   }
@@ -128,8 +124,7 @@ function flattenLandingZones(heights: number[], landingZones: LandingZone[]) {
   for (const zone of landingZones) {
     const startIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
     const endIdx = Math.ceil((zone.x + zone.width) / TERRAIN_SEGMENT_SIZE);
-    const zoneHeight =
-      heights[Math.floor((startIdx + endIdx) / 2)] ?? TERRAIN_BASE_HEIGHT;
+    const zoneHeight = heights[Math.floor((startIdx + endIdx) / 2)] ?? TERRAIN_BASE_HEIGHT;
 
     for (let i = startIdx; i <= endIdx && i < heights.length; i++) {
       heights[i] = zoneHeight;
@@ -152,9 +147,7 @@ function flattenLandingZones(heights: number[], landingZones: LandingZone[]) {
 
 function addRoverAffordances(heights: number[], landingZones: LandingZone[]) {
   function nearLandingZone(x: number) {
-    return landingZones.some(
-      (zone) => x >= zone.x - 36 && x <= zone.x + zone.width + 36,
-    );
+    return landingZones.some((zone) => x >= zone.x - 36 && x <= zone.x + zone.width + 36);
   }
 
   for (let i = 0; i < heights.length; i++) {
@@ -195,7 +188,7 @@ export function generateForegroundHeightmap(
   totalWidth: number,
   roughness: number,
   landingZones: LandingZone[],
-  seed = 0.31,
+  seed = 0.31
 ): number[] {
   const noise2D = createNoise2D(seededRandom(seed * 2147483647));
   const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
@@ -229,16 +222,14 @@ export function generateJaggedHeightmap(
   totalWidth: number,
   landingZones: LandingZone[],
   foregroundHeights: number[],
-  seed = 0.57,
+  seed = 0.57
 ): number[] {
   const random = seededRandom(seed * 2147483647);
   const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
   const controlStep = 28;
   const controls: number[] = [];
   const lowestLandingHeight = Math.max(
-    ...landingZones.map((z) =>
-      getTerrainHeightAt(foregroundHeights, z.x + z.width / 2),
-    ),
+    ...landingZones.map((z) => getTerrainHeightAt(foregroundHeights, z.x + z.width / 2))
   );
 
   let h = TERRAIN_BASE_HEIGHT + 55;
@@ -263,11 +254,7 @@ export function generateJaggedHeightmap(
     const startIdx = Math.floor((zone.x - 12) / TERRAIN_SEGMENT_SIZE);
     const endIdx = Math.ceil((zone.x + zone.width + 12) / TERRAIN_SEGMENT_SIZE);
     const padY = getTerrainHeightAt(foregroundHeights, zone.x + zone.width / 2);
-    for (
-      let i = Math.max(0, startIdx);
-      i <= endIdx && i < heights.length;
-      i++
-    ) {
+    for (let i = Math.max(0, startIdx); i <= endIdx && i < heights.length; i++) {
       heights[i] = Math.max(heights[i], padY + 18);
     }
   }
@@ -281,7 +268,7 @@ export function generateVisualForegroundHeightmap(
   totalWidth: number,
   mainHeights: number[],
   jaggedness = 1,
-  seed = 0.83,
+  seed = 0.83
 ): number[] {
   const random = seededRandom(seed * 2147483647);
   const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
@@ -303,8 +290,7 @@ export function generateVisualForegroundHeightmap(
     const eased = t * t * (3 - 2 * t);
     const y0 = controls[ci] ?? TERRAIN_BASE_HEIGHT;
     const y1 = controls[ci + 1] ?? y0;
-    const jagged =
-      Math.sin(x * 0.08) * 1.5 * amount + Math.sin(x * 0.025) * 3 * amount;
+    const jagged = Math.sin(x * 0.08) * 1.5 * amount + Math.sin(x * 0.025) * 3 * amount;
     const mainY = getTerrainHeightAt(mainHeights, x);
     heights.push(Math.max(y0 * (1 - eased) + y1 * eased + jagged, mainY + 22));
   }
@@ -319,7 +305,7 @@ export function generateVisualForegroundHeightmap(
 
 function combineSurfaceHeights(...heightmaps: number[][]): number[] {
   return heightmaps[0].map((_, i) =>
-    Math.min(...heightmaps.map((heights) => heights[i] ?? TERRAIN_BASE_HEIGHT)),
+    Math.min(...heightmaps.map((heights) => heights[i] ?? TERRAIN_BASE_HEIGHT))
   );
 }
 
@@ -327,7 +313,7 @@ export function createTerrainGraphics(
   heights: number[],
   color: number,
   alpha: number,
-  mode: TerrainRenderMode = 'flat',
+  mode: TerrainRenderMode = "flat"
 ): Container {
   const container = new Container();
   const g = new Graphics();
@@ -362,7 +348,7 @@ export function createTerrainGraphics(
       drawPseudoGradientTerrain(g, drawTerrainFill, alpha);
       drawSurfaceHighlight(g, heights);
       container.addChild(g);
-    } else if (mode === 'foregroundDark') {
+    } else if (mode === "foregroundDark") {
       drawTerrainFill(VISUAL_FOREGROUND_FILL, alpha);
       container.addChild(g);
     } else {
@@ -426,14 +412,14 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
   const glow = new Graphics();
   glow.roundRect(-w * 0.04, -5, w * 1.08, 10, 5);
   glow.fill({ color, alpha: tuning.wireframe ? 0 : 0.42 });
-  glow.label = 'landingZoneGlow';
+  glow.label = "landingZoneGlow";
   marker.addChild(glow);
 
   if (!tuning.wireframe) {
     gsap.to(glow, {
       alpha: 0.78,
       duration: 1.25,
-      ease: 'sine.inOut',
+      ease: "sine.inOut",
       repeat: -1,
       yoyo: true,
     });
@@ -454,7 +440,7 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
   });
   posts.circle(0, -30, 2.6).fill({ color, alpha: 0.95 });
   posts.circle(w, -30, 2.6).fill({ color, alpha: 0.95 });
-  posts.label = 'landingZonePosts';
+  posts.label = "landingZonePosts";
   marker.addChild(posts);
 
   // Text + arrow live in a single indicator group. The per-element GSAP tweens
@@ -462,14 +448,14 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
   // proximity (see updateLandingZoneProximity) so multiplying down the tree
   // fades the whole indicator out as the lander approaches.
   const indicator = new Container();
-  indicator.label = 'lzIndicator';
+  indicator.label = "lzIndicator";
   marker.addChild(indicator);
 
   const label = new Text({
-    text: 'LANDING ZONE',
+    text: "LANDING ZONE",
     style: {
       fill: color,
-      fontFamily: 'monospace',
+      fontFamily: "monospace",
       fontSize: 20,
       letterSpacing: 2,
     },
@@ -478,7 +464,7 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
   // (see updateLandingZoneProximity) keeps the text fixed in screen size while
   // its baseline stays pinned to the same world point.
   label.anchor.set(0.5, 1);
-  label.label = 'lzLabel';
+  label.label = "lzLabel";
   label.x = w / 2;
   label.y = -46;
   indicator.addChild(label);
@@ -494,7 +480,7 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
   gsap.to(label, {
     alpha: 0.5,
     duration: 1.1,
-    ease: 'sine.inOut',
+    ease: "sine.inOut",
     repeat: -1,
     yoyo: true,
   });
@@ -503,8 +489,8 @@ export function createLandingZoneMarker(zone: LandingZone): Container {
   const arrow = gsap.timeline({ repeat: -1, repeatDelay: 0.25 });
   arrow
     .set(chevron, { y: 0, alpha: 0.95 })
-    .to(chevron, { y: 9, duration: 0.85, ease: 'sine.in' }, 0)
-    .to(chevron, { alpha: 0, duration: 0.4, ease: 'power2.in' }, 0.5);
+    .to(chevron, { y: 9, duration: 0.85, ease: "sine.in" }, 0)
+    .to(chevron, { alpha: 0, duration: 0.4, ease: "power2.in" }, 0.5);
 
   return marker;
 }
@@ -522,16 +508,12 @@ export interface TerrainSystem {
 export function redrawTerrainSystem(terrain: TerrainSystem) {
   const [bgLayer, midLayer, mainLayer, visualFgLayer] = terrain.layers;
   bgLayer.container.removeChildren();
-  bgLayer.container.addChild(
-    createTerrainGraphics(terrain.layers[0].heights, 0x1b2431, 0.62),
-  );
+  bgLayer.container.addChild(createTerrainGraphics(terrain.layers[0].heights, 0x1b2431, 0.62));
   midLayer.container.removeChildren();
-  midLayer.container.addChild(
-    createTerrainGraphics(terrain.middleHeights, 0x515c6a, 0.88),
-  );
+  midLayer.container.addChild(createTerrainGraphics(terrain.middleHeights, 0x515c6a, 0.88));
   mainLayer.container.removeChildren();
   mainLayer.container.addChild(
-    createTerrainGraphics(terrain.foregroundHeights, 0x9ba4b0, 1.0, 'mainGradient'),
+    createTerrainGraphics(terrain.foregroundHeights, 0x9ba4b0, 1.0, "mainGradient")
   );
   visualFgLayer.container.removeChildren();
   visualFgLayer.container.addChild(
@@ -539,17 +521,15 @@ export function redrawTerrainSystem(terrain: TerrainSystem) {
       terrain.visualForegroundHeights,
       VISUAL_FOREGROUND_FILL,
       1.0,
-      'foregroundDark',
-    ),
+      "foregroundDark"
+    )
   );
 
   terrain.landingZoneMarkers.removeChildren();
   for (const zone of terrain.landingZones) {
     const marker = createLandingZoneMarker(zone);
     const heightIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
-    const zoneY =
-      (terrain.foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) *
-      PIXELS_PER_METER;
+    const zoneY = (terrain.foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) * PIXELS_PER_METER;
     marker.y = zoneY;
     terrain.landingZoneMarkers.addChild(marker);
   }
@@ -571,15 +551,16 @@ export function updateLandingZoneProximity(
   landerX: number | null,
   landerY: number | null,
   zoom = 1,
+  landed = false
 ) {
   const markers = terrain.landingZoneMarkers.children;
   for (let i = 0; i < markers.length; i++) {
     const marker = markers[i] as Container;
     const zone = terrain.landingZones[i];
     const active = zone.missionIndex === currentMission;
-    const glow = marker.getChildByLabel('landingZoneGlow');
-    const posts = marker.getChildByLabel('landingZonePosts');
-    const indicator = marker.getChildByLabel('lzIndicator');
+    const glow = marker.getChildByLabel("landingZoneGlow");
+    const posts = marker.getChildByLabel("landingZonePosts");
+    const indicator = marker.getChildByLabel("lzIndicator");
 
     if (glow) glow.visible = active;
     if (posts) posts.visible = active;
@@ -587,9 +568,15 @@ export function updateLandingZoneProximity(
     if (!active) continue;
     if (!indicator) continue;
 
+    // Hide the indicator when landed
+    if (landed) {
+      indicator.alpha = 0;
+      continue;
+    }
+
     // Counter the camera zoom so the text holds a constant screen size; its
     // baseline anchor keeps it pinned to the same world point as it scales.
-    const label = indicator.getChildByLabel('lzLabel');
+    const label = indicator.getChildByLabel("lzLabel");
     if (label) label.scale.set(1 / zoom);
 
     if (landerX == null || landerY == null) {
@@ -612,35 +599,26 @@ export function createTerrainSystem(): TerrainSystem {
     missionIndex: i,
   }));
 
-  const avgRoughness =
-    missions.reduce((s, m) => s + m.terrain.roughness, 0) / missions.length;
+  const avgRoughness = missions.reduce((s, m) => s + m.terrain.roughness, 0) / missions.length;
 
   const foregroundHeights = generateForegroundHeightmap(
     TERRAIN_TOTAL_WIDTH,
     avgRoughness,
-    landingZones,
+    landingZones
   );
 
   const middleHeights = generateJaggedHeightmap(
     TERRAIN_TOTAL_WIDTH,
     landingZones,
-    foregroundHeights,
+    foregroundHeights
   );
-  const surfaceHeights = combineSurfaceHeights(
-    foregroundHeights,
-    middleHeights,
-  );
+  const surfaceHeights = combineSurfaceHeights(foregroundHeights, middleHeights);
   const backgroundMargin = TERRAIN_TOTAL_WIDTH / 2;
-  const bgHeights = generateHeightmap(
-    TERRAIN_TOTAL_WIDTH + backgroundMargin * 2,
-    0.25,
-    [],
-    0.73,
-  );
+  const bgHeights = generateHeightmap(TERRAIN_TOTAL_WIDTH + backgroundMargin * 2, 0.25, [], 0.73);
   const visualForegroundHeights = generateVisualForegroundHeightmap(
     TERRAIN_TOTAL_WIDTH,
     foregroundHeights,
-    tuning.foregroundJaggedness,
+    tuning.foregroundJaggedness
   );
 
   const bgLayer: TerrainLayer = {
@@ -656,9 +634,7 @@ export function createTerrainSystem(): TerrainSystem {
     heights: middleHeights,
     parallaxFactor: 1,
   };
-  midLayer.container.addChild(
-    createTerrainGraphics(middleHeights, 0x515c6a, 0.88),
-  );
+  midLayer.container.addChild(createTerrainGraphics(middleHeights, 0x515c6a, 0.88));
 
   const fgLayer: TerrainLayer = {
     container: new Container(),
@@ -666,7 +642,7 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1.0,
   };
   fgLayer.container.addChild(
-    createTerrainGraphics(foregroundHeights, 0x9ba4b0, 1.0, 'mainGradient'),
+    createTerrainGraphics(foregroundHeights, 0x9ba4b0, 1.0, "mainGradient")
   );
 
   const visualFgLayer: TerrainLayer = {
@@ -675,20 +651,14 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1.28,
   };
   visualFgLayer.container.addChild(
-    createTerrainGraphics(
-      visualForegroundHeights,
-      VISUAL_FOREGROUND_FILL,
-      1.0,
-      'foregroundDark',
-    ),
+    createTerrainGraphics(visualForegroundHeights, VISUAL_FOREGROUND_FILL, 1.0, "foregroundDark")
   );
 
   const landingZoneMarkers = new Container();
   for (const zone of landingZones) {
     const marker = createLandingZoneMarker(zone);
     const heightIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
-    const zoneY =
-      (foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) * PIXELS_PER_METER;
+    const zoneY = (foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) * PIXELS_PER_METER;
     marker.y = zoneY;
     landingZoneMarkers.addChild(marker);
   }

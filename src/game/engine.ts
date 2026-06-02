@@ -1,9 +1,9 @@
-import { Application, Container } from 'pixi.js';
-import gsap from 'gsap';
-import { createBrowserInspector } from '@statelyai/inspect';
-import { createActor, type Actor } from 'xstate';
-import { gameMachine } from '../machines/gameMachine';
-import { missions } from '../data/missions';
+import { Application, Container } from "pixi.js";
+import gsap from "gsap";
+import { createBrowserInspector } from "@statelyai/inspect";
+import { createActor, type Actor } from "xstate";
+import { gameMachine } from "../machines/gameMachine";
+import { missions } from "../data/missions";
 import {
   initPhysics,
   createWorld,
@@ -12,21 +12,15 @@ import {
   applyThrust,
   replaceVehicleCollider,
   type LanderBody,
-} from './physics';
+} from "./physics";
 import {
   createTerrainSystem,
   generateVisualForegroundHeightmap,
   getTerrainHeightAt,
   redrawTerrainSystem,
   updateLandingZoneProximity,
-} from './terrain';
-import {
-  createCamera,
-  focusCamera,
-  frameCamera,
-  setCameraFramed,
-  type Camera,
-} from './camera';
+} from "./terrain";
+import { createCamera, focusCamera, frameCamera, setCameraFramed, type Camera } from "./camera";
 import {
   createLanderGraphics,
   drawLanderGraphics,
@@ -35,7 +29,7 @@ import {
   checkLanding,
   loadLanderGraphics,
   type Lander,
-} from './lander';
+} from "./lander";
 import {
   createRoverGraphics,
   drawRoverGraphics,
@@ -44,12 +38,13 @@ import {
   syncRoverGraphics,
   updateRoverPhysics,
   type Rover,
-} from './rover';
-import { ParticleSystem } from './particles';
-import { createStarfield, createEarth, loadEarthGraphics } from './starfield';
-import { InputManager } from './input';
-import { tuning } from './tuning';
+} from "./rover";
+import { ParticleSystem } from "./particles";
+import { createStarfield, createEarth, loadEarthGraphics } from "./starfield";
+import { InputManager } from "./input";
+import { tuning } from "./tuning";
 import {
+  MAX_FUEL,
   FIXED_TIMESTEP,
   LANDER_HEIGHT,
   LANDER_WIDTH,
@@ -57,8 +52,8 @@ import {
   ROVER_HEIGHT,
   TELEMETRY_HZ,
   TERRAIN_TOTAL_WIDTH,
-} from './constants';
-import type RAPIER from '@dimforge/rapier2d-compat';
+} from "./constants";
+import type RAPIER from "@dimforge/rapier2d-compat";
 
 export interface Game {
   app: Application;
@@ -67,7 +62,7 @@ export interface Game {
   destroy: () => void;
 }
 
-type VehicleMode = 'lander' | 'rover';
+type VehicleMode = "lander" | "rover";
 type BrowserInspector = ReturnType<typeof createBrowserInspector>;
 type InspectWindow = Window & { __xstateInspector?: BrowserInspector };
 const RETURN_TO_LANDER_CLEARANCE = 1.5;
@@ -78,16 +73,16 @@ const LANDED_CAMERA_ZOOM = 2.4;
 
 const inspector = createBrowserInspector({
   filter: (event) => {
-    if (event.type === '@xstate.event') {
-      return event.event.type !== 'UPDATE_TELEMETRY';
+    if (event.type === "@xstate.event") {
+      return event.event.type !== "UPDATE_TELEMETRY";
     }
-    if (event.type === '@xstate.snapshot') {
-      return event.event.type !== 'UPDATE_TELEMETRY';
+    if (event.type === "@xstate.snapshot") {
+      return event.event.type !== "UPDATE_TELEMETRY";
     }
     return true;
   },
   maxDeferredEvents: 50,
-  url: 'https://editor.stately.ai',
+  url: "https://editor.stately.ai",
   autoStart: false,
 });
 /**
@@ -119,7 +114,7 @@ interface Vehicle {
 
 export async function createGame(
   canvas: HTMLCanvasElement,
-  onProgress?: (pct: number) => void,
+  onProgress?: (pct: number) => void
 ): Promise<Game> {
   onProgress?.(0.1);
 
@@ -137,17 +132,10 @@ export async function createGame(
   });
   onProgress?.(0.6);
 
-  await Promise.all([
-    loadLanderGraphics(),
-    loadRoverGraphics(),
-    loadEarthGraphics(),
-  ]);
+  await Promise.all([loadLanderGraphics(), loadRoverGraphics(), loadEarthGraphics()]);
   onProgress?.(0.75);
 
-  const actor = createActor(
-    gameMachine,
-    inspector ? { inspect: inspector.inspect } : undefined,
-  );
+  const actor = createActor(gameMachine, inspector ? { inspect: inspector.inspect } : undefined);
   const input = new InputManager();
 
   const worldContainer = new Container();
@@ -191,10 +179,8 @@ export async function createGame(
   let lastForegroundJaggedness = tuning.foregroundJaggedness;
 
   function applyRenderMode(force = false) {
-    const jaggednessChanged =
-      lastForegroundJaggedness !== tuning.foregroundJaggedness;
-    if (!force && lastWireframe === tuning.wireframe && !jaggednessChanged)
-      return;
+    const jaggednessChanged = lastForegroundJaggedness !== tuning.foregroundJaggedness;
+    if (!force && lastWireframe === tuning.wireframe && !jaggednessChanged) return;
     lastWireframe = tuning.wireframe;
     lastForegroundJaggedness = tuning.foregroundJaggedness;
 
@@ -202,7 +188,7 @@ export async function createGame(
       terrain.visualForegroundHeights = generateVisualForegroundHeightmap(
         TERRAIN_TOTAL_WIDTH,
         terrain.foregroundHeights,
-        tuning.foregroundJaggedness,
+        tuning.foregroundJaggedness
       );
       const foregroundVisualLayer = terrain.layers.at(-1);
       if (foregroundVisualLayer) {
@@ -240,8 +226,7 @@ export async function createGame(
 
   function getLandingTarget(missionIndex: number): { x: number; y: number } {
     const mission = missions[missionIndex];
-    const x =
-      mission.terrain.landingZoneX + mission.terrain.landingZoneWidth / 2;
+    const x = mission.terrain.landingZoneX + mission.terrain.landingZoneWidth / 2;
     const y = getTerrainHeightAt(terrain.foregroundHeights, x);
     return { x, y };
   }
@@ -262,9 +247,7 @@ export async function createGame(
     for (let i = 0; i < missions.length; i++) {
       const target = getLandingTarget(i);
       const screenFraction =
-        0.5 +
-        ((target.x * PIXELS_PER_METER - camera.x) * camera.zoom) /
-          camera.screenWidth;
+        0.5 + ((target.x * PIXELS_PER_METER - camera.x) * camera.zoom) / camera.screenWidth;
       if (screenFraction < 0.25 || screenFraction > 0.75) continue;
       const distance = Math.abs(screenFraction - 0.5);
       if (distance < closest) {
@@ -277,7 +260,7 @@ export async function createGame(
       visibleMission !== context.currentMission ||
       context.manualMissionInView !== (visibleMission != null)
     ) {
-      actor.send({ type: 'SET_MANUAL_MISSION', missionIndex: visibleMission });
+      actor.send({ type: "SET_MANUAL_MISSION", missionIndex: visibleMission });
     }
   }
 
@@ -297,12 +280,9 @@ export async function createGame(
 
   function getMissionSpawn(missionIndex: number): { x: number; y: number } {
     const target = getLandingTarget(missionIndex);
-    const previousTarget =
-      missionIndex > 0 ? getLandingTarget(missionIndex - 1) : null;
+    const previousTarget = missionIndex > 0 ? getLandingTarget(missionIndex - 1) : null;
     const nextTarget =
-      missionIndex < missions.length - 1
-        ? getLandingTarget(missionIndex + 1)
-        : null;
+      missionIndex < missions.length - 1 ? getLandingTarget(missionIndex + 1) : null;
     const missionSpacing =
       previousTarget != null
         ? target.x - previousTarget.x
@@ -311,8 +291,7 @@ export async function createGame(
           : 0;
     const x = target.x - (missionSpacing * missionIndex) / 6;
     // startAltitude is globally tunable so it can be experimented with.
-    const y =
-      getTerrainHeightAt(terrain.foregroundHeights, x) - tuning.startAltitude;
+    const y = getTerrainHeightAt(terrain.foregroundHeights, x) - tuning.startAltitude;
     return { x, y };
   }
 
@@ -339,8 +318,8 @@ export async function createGame(
       body,
       landerGfx,
       roverGfx,
-      mode: 'lander',
-      fuel: 100,
+      mode: "lander",
+      fuel: MAX_FUEL,
       thrustLevel: 0,
       destroyed: false,
       leftEngineOn: false,
@@ -365,10 +344,8 @@ export async function createGame(
     if (vehicle.mode !== mode) {
       const body = vehicle.body.rigidBody;
       const pos = body.translation();
-      const prevHalfHeight =
-        vehicle.mode === 'rover' ? ROVER_HEIGHT / 2 : LANDER_HEIGHT / 2;
-      const nextHalfHeight =
-        mode === 'rover' ? ROVER_HEIGHT / 2 : LANDER_HEIGHT / 2;
+      const prevHalfHeight = vehicle.mode === "rover" ? ROVER_HEIGHT / 2 : LANDER_HEIGHT / 2;
+      const nextHalfHeight = mode === "rover" ? ROVER_HEIGHT / 2 : LANDER_HEIGHT / 2;
 
       replaceVehicleCollider(world, vehicle.body, mode);
       body.setTranslation(
@@ -376,14 +353,14 @@ export async function createGame(
           x: pos.x,
           y: pos.y + prevHalfHeight - nextHalfHeight,
         },
-        true,
+        true
       );
       body.setAngvel(0, true);
     }
 
     vehicle.mode = mode;
-    vehicle.landerGfx.visible = mode === 'lander';
-    vehicle.roverGfx.visible = mode === 'rover';
+    vehicle.landerGfx.visible = mode === "lander";
+    vehicle.roverGfx.visible = mode === "rover";
   }
 
   /**
@@ -400,15 +377,21 @@ export async function createGame(
     const rightH = getTerrainHeightAt(heights, x + 2);
     const slope = Math.atan2(rightH - leftH, 4);
 
-    const radius = ROVER_HEIGHT * 0.5;
+    // Resting suspension compression under the rover's own weight, so the
+    // wheels spawn already loaded and the chassis doesn't drop.
+    const mass = body.mass();
+    const restCompression = Math.min(
+      tuning.roverSuspensionLength,
+      (mass * Math.abs(tuning.gravity)) / 2 / tuning.roverSuspensionSpring
+    );
+    const rideHeight = ROVER_HEIGHT * 0.2 + (tuning.roverSuspensionLength - restCompression);
+
+    // Offset the chassis centre along the surface normal (chassis "up").
     const upX = Math.sin(slope);
     const upY = -Math.cos(slope);
 
     body.setRotation(slope, true);
-    body.setTranslation(
-      { x: x + upX * radius, y: surfaceY + upY * radius },
-      true,
-    );
+    body.setTranslation({ x: x + upX * rideHeight, y: surfaceY + upY * rideHeight }, true);
     body.setLinvel({ x: 0, y: 0 }, true);
     body.setAngvel(0, true);
   }
@@ -423,7 +406,7 @@ export async function createGame(
     body.setRotation(0, true);
     vehicle.destroyed = false;
     vehicle.thrustLevel = 0;
-    setVehicleMode('lander');
+    setVehicleMode("lander");
   }
 
   function boostLanderFromGround() {
@@ -437,13 +420,10 @@ export async function createGame(
         x: pos.x,
         y: terrainH - LANDER_HEIGHT / 2 - RETURN_TO_LANDER_CLEARANCE,
       },
-      true,
+      true
     );
     body.setRotation(0, true);
-    body.setLinvel(
-      { x: vel.x, y: Math.min(vel.y, -RETURN_TO_LANDER_BOOST_SPEED) },
-      true,
-    );
+    body.setLinvel({ x: vel.x, y: Math.min(vel.y, -RETURN_TO_LANDER_BOOST_SPEED) }, true);
     body.setAngvel(0, true);
     applyThrust(body, RETURN_TO_LANDER_BOOST_IMPULSE, { x: 0, y: -1 });
     vehicle.thrustLevel = 1;
@@ -459,7 +439,7 @@ export async function createGame(
     const endY = target.y - LANDER_HEIGHT / 2;
     vehicle.destroyed = false;
     vehicle.thrustLevel = 1;
-    setVehicleMode('lander');
+    setVehicleMode("lander");
 
     body.setTranslation({ x: target.x, y: startY }, true);
     body.setLinvel({ x: 0, y: 0 }, true);
@@ -472,7 +452,7 @@ export async function createGame(
     landingTween = gsap.to(pos, {
       y: endY,
       duration: 1.5,
-      ease: 'expo.out',
+      ease: "expo.out",
       onUpdate: () => {
         if (!vehicle) return;
         const body = vehicle.body.rigidBody;
@@ -488,7 +468,7 @@ export async function createGame(
         if (vehicle) vehicle.thrustLevel = 0;
         placeVehicleLanded(actor.getSnapshot().context.currentMission);
         actor.send({
-          type: 'LANDED',
+          type: "LANDED",
           missionIndex: actor.getSnapshot().context.currentMission,
         });
       },
@@ -501,25 +481,20 @@ export async function createGame(
     const rot = vehicle.body.rigidBody.rotation();
     const ppm = PIXELS_PER_METER;
 
-    const gfx =
-      vehicle.mode === 'lander' ? vehicle.landerGfx : vehicle.roverGfx;
+    const gfx = vehicle.mode === "lander" ? vehicle.landerGfx : vehicle.roverGfx;
     gfx.x = pos.x * ppm;
     gfx.y = pos.y * ppm;
     gfx.rotation = rot;
 
     for (const container of [vehicle.landerGfx, vehicle.roverGfx]) {
-      const debugBounds = container.children.find(
-        (c) => c.label === 'debugColliderBounds',
-      );
+      const debugBounds = container.children.find((c) => c.label === "debugColliderBounds");
       if (debugBounds) {
         debugBounds.visible = tuning.wireframe || tuning.showDebugBounds;
       }
     }
 
-    if (vehicle.mode === 'lander') {
-      const glow = vehicle.landerGfx.children.find(
-        (c) => c.label === 'engineGlow',
-      );
+    if (vehicle.mode === "lander") {
+      const glow = vehicle.landerGfx.children.find((c) => c.label === "engineGlow");
       if (glow) glow.alpha = vehicle.thrustLevel * 0.6;
     } else {
       syncRoverGraphics({
@@ -532,14 +507,11 @@ export async function createGame(
   function startMissionBoost() {
     if (!vehicle) return;
     starterBoost = null;
-    setVehicleMode('lander');
+    setVehicleMode("lander");
     const body = vehicle.body.rigidBody;
     const pos = body.translation();
     const terrainH = getTerrainHeightAt(terrain.surfaceHeights, pos.x);
-    body.setTranslation(
-      { x: pos.x, y: terrainH - LANDER_HEIGHT / 2 - 0.75 },
-      true,
-    );
+    body.setTranslation({ x: pos.x, y: terrainH - LANDER_HEIGHT / 2 - 0.75 }, true);
     body.setLinvel({ x: 1.5, y: -1.5 }, true);
     body.setAngvel(0, true);
     body.setRotation(tuning.starterLaunchAngle, true);
@@ -555,7 +527,7 @@ export async function createGame(
     vehicle.body.rigidBody.setRotation(0, true);
     particles.emitExplosion(pos.x, pos.y);
     vehicle.landerGfx.visible = false;
-    actor.send({ type: 'CRASHED' });
+    actor.send({ type: "CRASHED" });
   }
 
   function isLanderTouchingTerrain() {
@@ -596,7 +568,7 @@ export async function createGame(
     if (!vehicle || vehicle.destroyed) return;
 
     const state = actor.getSnapshot();
-    if (!state.matches({ playing: 'descending' })) return;
+    if (!state.matches({ playing: "descending" })) return;
 
     // contactPairsWith is broad-phase, so use an altitude check against the
     // terrain to detect actual ground contact.
@@ -605,8 +577,7 @@ export async function createGame(
     const angle = vehicle.body.rigidBody.rotation();
     const speed = Math.hypot(vel.x, vel.y);
     const absAngle = Math.abs(angle % (Math.PI * 2));
-    const normalizedAngle =
-      absAngle > Math.PI ? Math.PI * 2 - absAngle : absAngle;
+    const normalizedAngle = absAngle > Math.PI ? Math.PI * 2 - absAngle : absAngle;
     const contact = getLanderTerrainContact();
     if (!contact.touching) return;
 
@@ -625,25 +596,25 @@ export async function createGame(
     });
     const result =
       missionIndex === -1
-        ? { type: 'missed' as const }
+        ? { type: "missed" as const }
         : checkLanding(
             vehicle as unknown as Lander,
             missions[missionIndex].terrain.landingZoneX,
-            missions[missionIndex].terrain.landingZoneWidth,
+            missions[missionIndex].terrain.landingZoneWidth
           );
 
     if (!result) return;
 
-    if (result.type === 'crashed') {
+    if (result.type === "crashed") {
       crashVehicle(pos);
-    } else if (result.type === 'missed') {
+    } else if (result.type === "missed") {
       starterBoost = null;
-      actor.send({ type: 'MISSED' });
+      actor.send({ type: "MISSED" });
     } else {
       particles.emitDust(pos.x, pos.y);
       vehicle.body.rigidBody.setLinvel({ x: 0, y: 0 }, true);
       vehicle.body.rigidBody.setAngvel(0, true);
-      actor.send({ type: 'LANDED', missionIndex });
+      actor.send({ type: "LANDED", missionIndex });
     }
   }
 
@@ -651,8 +622,7 @@ export async function createGame(
     if (!vehicle) return;
     const pos = vehicle.body.rigidBody.translation();
     const terrainH = getTerrainHeightAt(terrain.surfaceHeights, pos.x);
-    const halfHeight =
-      vehicle.mode === 'rover' ? ROVER_HEIGHT / 2 : LANDER_HEIGHT / 2;
+    const halfHeight = vehicle.mode === "rover" ? ROVER_HEIGHT / 2 : LANDER_HEIGHT / 2;
     const bottomY = pos.y + halfHeight;
     vehicle.terrainDistance = terrainH - bottomY;
     vehicle.isGrounded = vehicle.terrainDistance <= 0.35;
@@ -665,10 +635,7 @@ export async function createGame(
 
   actor.subscribe((state) => {
     const v = state.value;
-    const playing =
-      typeof v === 'object' && 'playing' in v
-        ? ((v as any).playing as string)
-        : null;
+    const playing = typeof v === "object" && "playing" in v ? ((v as any).playing as string) : null;
 
     if (playing === prevPlayingState) return;
     const prev = prevPlayingState;
@@ -679,29 +646,27 @@ export async function createGame(
     if (playing === null) return;
 
     const resumingFromPause =
-      prev === 'paused' &&
-      playing !== 'simulatingLanding' &&
-      !state.context.restartRequested;
+      prev === "paused" && playing !== "simulatingLanding" && !state.context.restartRequested;
     if (resumingFromPause) return; // history resume — keep everything as-is
 
     switch (playing) {
-      case 'descending':
+      case "descending":
         if (state.context.restartRequested) {
           accumulator = 0;
           starterBoost = null;
           spawnVehicle(state.context.currentMission);
-          actor.send({ type: 'RESTARTED' });
+          actor.send({ type: "RESTARTED" });
           break;
         }
 
-        if (prev === 'landed' || prev === 'rover') {
+        if (prev === "landed" || prev === "rover") {
           // Continue/return keeps the same body and hands control back
           // immediately in the normal descending state.
           if (vehicle) {
-            vehicle.fuel = 100;
+            vehicle.fuel = MAX_FUEL;
             vehicle.destroyed = false;
-            setVehicleMode('lander');
-            if (prev === 'landed') {
+            setVehicleMode("lander");
+            if (prev === "landed") {
               startMissionBoost();
             } else {
               boostLanderFromGround();
@@ -715,30 +680,30 @@ export async function createGame(
         }
         break;
 
-      case 'rover':
+      case "rover":
         // Same entity — swap behaviour, then drop it onto the terrain right
         // where the lander was, flat against the slope.
-        setVehicleMode('rover');
+        setVehicleMode("rover");
         placeRoverOnTerrain();
         break;
 
-      case 'landed':
-        setVehicleMode('lander');
+      case "landed":
+        setVehicleMode("lander");
         break;
 
-      case 'simulatingLanding':
+      case "simulatingLanding":
         startSimulatedLanding(state.context.currentMission);
         break;
 
-      case 'crashed':
-      case 'missed':
-      case 'paused':
+      case "crashed":
+      case "missed":
+      case "paused":
         break;
     }
   });
 
   input.setKonamiCallback(() => {
-    actor.send({ type: 'KONAMI' });
+    actor.send({ type: "KONAMI" });
   });
 
   input.setAnyControlCallback(() => {
@@ -751,11 +716,11 @@ export async function createGame(
     if (state.matches({ playing: 'paused' })) {
       actor.send({ type: 'RESUME' });
     } else if (
-      state.matches({ playing: 'descending' }) ||
-      state.matches({ playing: 'rover' }) ||
-      state.matches({ playing: 'simulatingLanding' })
+      state.matches({ playing: "descending" }) ||
+      state.matches({ playing: "rover" }) ||
+      state.matches({ playing: "simulatingLanding" })
     ) {
-      actor.send({ type: 'PAUSE' });
+      actor.send({ type: "PAUSE" });
     }
   });
 
@@ -771,7 +736,7 @@ export async function createGame(
     const altitude = terrainH - pos.y - LANDER_HEIGHT / 2;
 
     actor.send({
-      type: 'UPDATE_TELEMETRY',
+      type: "UPDATE_TELEMETRY",
       velocity: { x: vel.x, y: vel.y },
       altitude: Math.max(0, altitude),
       angle: vehicle.body.rigidBody.rotation(),
@@ -784,6 +749,7 @@ export async function createGame(
     applyRenderMode();
 
     const state = actor.getSnapshot();
+    const isLanded = state.matches({ playing: "landed" });
 
     // Fade landing-zone indicators out as the lander closes in.
     if (vehicle && !vehicle.destroyed) {
@@ -794,6 +760,7 @@ export async function createGame(
         t.x,
         t.y,
         camera.zoom,
+        isLanded
       );
     } else {
       updateLandingZoneProximity(
@@ -802,6 +769,7 @@ export async function createGame(
         null,
         null,
         camera.zoom,
+        isLanded
       );
     }
 
@@ -809,30 +777,22 @@ export async function createGame(
     const delta = Math.min(ticker.deltaMS / 1000, 0.05);
 
     const playing =
-      typeof state.value === 'object' && 'playing' in state.value
+      typeof state.value === "object" && "playing" in state.value
         ? ((state.value as any).playing as string)
         : null;
 
-    if (playing === 'descending' && vehicle && !vehicle.destroyed) {
+    if (playing === "descending" && vehicle && !vehicle.destroyed) {
       world.gravity = { x: 0, y: tuning.gravity };
       accumulator += delta;
       while (accumulator >= FIXED_TIMESTEP) {
-        updateLanderPhysics(
-          vehicle as unknown as Lander,
-          input.state,
-          FIXED_TIMESTEP,
-        );
+        updateLanderPhysics(vehicle as unknown as Lander, input.state, FIXED_TIMESTEP);
         if (starterBoost && starterBoost.burnRemaining > 0) {
-          applyThrust(
-            vehicle.body.rigidBody,
-            tuning.starterLaunchForce * FIXED_TIMESTEP,
-            { x: 0, y: -1 },
-          );
+          applyThrust(vehicle.body.rigidBody, tuning.starterLaunchForce * FIXED_TIMESTEP, {
+            x: 0,
+            y: -1,
+          });
           vehicle.thrustLevel = 1;
-          vehicle.fuel = Math.max(
-            0,
-            vehicle.fuel - tuning.fuelBurnMain * FIXED_TIMESTEP,
-          );
+          vehicle.fuel = Math.max(0, vehicle.fuel - tuning.fuelBurnMain * FIXED_TIMESTEP);
           starterBoost.burnRemaining -= FIXED_TIMESTEP;
           if (starterBoost.burnRemaining <= 0) {
             starterBoost = null;
@@ -841,15 +801,10 @@ export async function createGame(
         const preStepVel = vehicle.body.rigidBody.linvel();
         const preStepPos = vehicle.body.rigidBody.translation();
         const impactSpeed = Math.hypot(preStepVel.x, preStepVel.y);
-        const terrainH = getTerrainHeightAt(
-          terrain.surfaceHeights,
-          preStepPos.x,
-        );
-        const predictedBottomY =
-          preStepPos.y + LANDER_HEIGHT / 2 + preStepVel.y * FIXED_TIMESTEP;
+        const terrainH = getTerrainHeightAt(terrain.surfaceHeights, preStepPos.x);
+        const predictedBottomY = preStepPos.y + LANDER_HEIGHT / 2 + preStepVel.y * FIXED_TIMESTEP;
         const willHitFast =
-          impactSpeed > tuning.maxLandingSpeed &&
-          predictedBottomY >= terrainH - 0.25;
+          impactSpeed > tuning.maxLandingSpeed && predictedBottomY >= terrainH - 0.25;
         world.step();
         accumulator -= FIXED_TIMESTEP;
         if (willHitFast) {
@@ -858,10 +813,7 @@ export async function createGame(
         }
         if (isLanderTouchingTerrain()) {
           checkContactAndLanding(impactSpeed);
-          if (
-            vehicle.destroyed ||
-            !actor.getSnapshot().matches({ playing: 'descending' })
-          ) {
+          if (vehicle.destroyed || !actor.getSnapshot().matches({ playing: "descending" })) {
             break;
           }
         }
@@ -882,7 +834,7 @@ export async function createGame(
         telemetryTimer = 0;
         sendTelemetry();
       }
-    } else if (playing === 'rover' && vehicle) {
+    } else if (playing === "rover" && vehicle) {
       world.gravity = { x: 0, y: tuning.gravity };
       accumulator += delta;
       while (accumulator >= FIXED_TIMESTEP) {
@@ -902,7 +854,7 @@ export async function createGame(
         telemetryTimer = 0;
         sendTelemetry();
       }
-    } else if (playing === 'simulatingLanding') {
+    } else if (playing === "simulatingLanding") {
       // GSAP tween drives position; just sync graphics + emit particles
       if (vehicle) {
         syncVehicleGraphics();
@@ -921,17 +873,17 @@ export async function createGame(
   });
 
   function applyCamera(state: any, playing: string | null) {
-    staticLanderContainer.visible = state.matches?.('manual') === true;
+    staticLanderContainer.visible = state.matches?.("manual") === true;
 
-    if (state.matches?.('manual')) {
+    if (state.matches?.("manual")) {
       const target = getManualBrowseTarget(state.context.browsePosition);
       focusCamera(camera, target.x, target.y, MANUAL_CAMERA_ZOOM, 0.5, 0.58);
       updateManualMissionInView();
     } else if (vehicle && !vehicle.destroyed) {
       const pos = vehicle.body.rigidBody.translation();
-      if (playing === 'rover') {
+      if (playing === "rover") {
         focusCamera(camera, pos.x, pos.y, 2.2, 0.5, 0.56);
-      } else if (playing === 'landed') {
+      } else if (playing === "landed") {
         focusCamera(camera, pos.x, pos.y, LANDED_CAMERA_ZOOM, 1 / 3, 0.58);
       } else {
         const target = getLandingTarget(state.context.currentMission);
@@ -961,7 +913,7 @@ export async function createGame(
     camera.screenHeight = window.innerHeight;
   }
 
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 
   onProgress?.(1.0);
 
@@ -974,7 +926,7 @@ export async function createGame(
     destroy() {
       actor.stop();
       input.destroy();
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       starterBoost = null;
       if (landingTween) {
         landingTween.kill();

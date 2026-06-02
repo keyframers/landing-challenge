@@ -9,21 +9,11 @@ import { CustomEase } from "gsap/CustomEase";
 import PhysicsPropsPlugin from "gsap/PhysicsPropsPlugin";
 import Physics2DPlugin from "gsap/Physics2DPlugin";
 
-gsap.registerPlugin(
-  useGSAP,
-  SplitText,
-  CustomEase,
-  PhysicsPropsPlugin,
-  Physics2DPlugin,
-);
+gsap.registerPlugin(useGSAP, SplitText, CustomEase, PhysicsPropsPlugin, Physics2DPlugin);
 
 type LabelProps = HTMLAttributes<HTMLDivElement>;
 
-export default function InfoPanelLabel({
-  className,
-  children,
-  ...props
-}: LabelProps) {
+export default function InfoPanelLabel({ className, children, ...props }: LabelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -32,14 +22,15 @@ export default function InfoPanelLabel({
 
       gsap.from(containerRef.current, {
         letterSpacing: "10px",
-        duration: 1,
+        duration: 0.5,
+        delay: 1,
       });
     },
-    { scope: containerRef },
+    { scope: containerRef }
   );
 
   return (
-    <div className={classNames(styles.root, className)} {...props}>
+    <div ref={containerRef} className={classNames(styles.root, className)} {...props}>
       <span className={styles.slash}>/</span>
       <span className={styles.slash}>/</span>
       <span className={styles.text}>{children}</span>

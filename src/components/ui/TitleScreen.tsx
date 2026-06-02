@@ -25,6 +25,12 @@ export default function TitleScreen({
   const containerRef = useRef<HTMLDivElement>(null);
   useModalKeyboard(containerRef);
 
+  function focusLaunchButton() {
+    containerRef.current
+      ?.querySelector<HTMLButtonElement>("[data-primary='true']")
+      ?.focus();
+  }
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Escape") {
@@ -45,6 +51,7 @@ export default function TitleScreen({
       tlRef.current = tl;
 
       tl.set(`.${styles.buttonGroup} button`, { opacity: 0, y: 20 });
+      requestAnimationFrame(focusLaunchButton);
 
       tl.addLabel("title-start");
 
@@ -150,6 +157,8 @@ clamp:false
           autoAlpha: 1,
           ease: "power2.out",
           stagger: 0.4,
+          onStart: focusLaunchButton,
+          onComplete: focusLaunchButton,
         },
         "-=2"
       );
