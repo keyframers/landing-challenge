@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import classNames from "classnames";
 import styles from "./HUD.module.css";
 import { tuning } from "../../game/tuning";
 import Button from "./Button";
@@ -54,14 +55,10 @@ export default function HUD({
 
       {/* Left panel - thrust gauge */}
       <div className={styles.leftPanel}>
-        <div className={`${styles.panelLabel} ${styles.thrustLabel}`}>
-          Thrust
-        </div>
+        <div className={classNames(styles.panelLabel, styles.thrustLabel)}>Thrust</div>
         <ThrustGauge level={thrustLevel} />
-        <div className={`${styles.panelLabel} ${styles.fuelLabel}`}>Fuel</div>
-        <div
-          className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}
-        >
+        <div className={classNames(styles.panelLabel, styles.fuelLabel)}>Fuel</div>
+        <div className={classNames(styles.fuelValue, fuel < 20 ? styles.low : styles.normal)}>
           {Math.round(fuel)}%
         </div>
       </div>
@@ -136,21 +133,11 @@ function ThrustGauge({ level }: { level: number }) {
   );
 }
 
-function TelemetryItem({
-  label,
-  value,
-  warn,
-}: {
-  label: string;
-  value: string;
-  warn?: boolean;
-}) {
+function TelemetryItem({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
   return (
     <div className={styles.telemetryItem}>
       <div className={styles.telemetryLabel}>{label}</div>
-      <div
-        className={`${styles.telemetryValue} ${warn ? styles.warning : styles.normal}`}
-      >
+      <div className={classNames(styles.telemetryValue, warn ? styles.warning : styles.normal)}>
         {value}
       </div>
     </div>
@@ -176,7 +163,11 @@ function MissionProgress({
           <button
             key={i}
             onClick={() => onMissionSelect?.(i)}
-            className={`${styles.progressDot} ${dotClass} ${onMissionSelect ? styles.clickable : ""}`}
+            className={classNames(
+              styles.progressDot,
+              dotClass,
+              onMissionSelect ? styles.clickable : ""
+            )}
             style={{ cursor: onMissionSelect ? "pointer" : "default" }}
           />
         );
