@@ -1,15 +1,19 @@
 .panel {
   position: absolute;
-  top: 8rem;
-  right: 2rem;
-  width: min(600px, 60vw);
-  background: var(--content-bg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 2rem;
+  right: 0;
+  width: min(70ch, 80vw);
+  padding: 8rem 2rem;
   z-index: 25;
   pointer-events: auto;
   backdrop-filter: blur(3px);
+}
+
+.panelBackground {
+  position: absolute;
+  inset: 0;
+  background: var(--content-bg);
+  z-index: -1;
+  height: 100dvh;
 }
 
 .badge {
@@ -29,30 +33,50 @@
 .title {
   font-size: 6rem;
   font-weight: 700;
-  margin: -5rem 0 0.2rem -4rem;
-  color: #f4f4f5;
+  margin-block-end: 1rem;
   white-space: nowrap;
   mix-blend-mode: hard-light;
   opacity: 0.9;
 }
 
+.titleText {
+  display: block;
+  margin-bottom: -0.16em;
+  position: relative;
+  z-index: 2;
+}
+
+.titleLine {
+  display: block;
+  width: 100vw;
+  height: 0.05em;
+  margin-bottom: 0.05em;
+  background: var(--accent);
+  position: absolute;
+  right: 0;
+  transformorigin: center right;
+}
+
+.titleLine + .titleLine {
+  margin-top: 0.5rem;
+}
+
 .subtitle {
   font-size: 0.75rem;
   letter-spacing: 0.15em;
-  color: #888;
+  color: var(--subtle);
   text-transform: uppercase;
   margin-bottom: 0.3rem;
 }
 
 .date {
-  font-size: 0.75rem;
-  color: #666;
+  font-size: 1.5rem;
+  font-family: var(--font-family-subheading);
+  color: var(--subtle);
   margin-bottom: 1rem;
 }
 
 .description {
-  font-size: 0.85rem;
-  color: #aaa;
   line-height: 1.6;
   margin: 0 0 1rem 0;
 }

@@ -9,6 +9,7 @@ interface InfoPanelProps {
   onDriveRover?: () => void;
   showRoverButton: boolean;
 }
+import { useGSAP } from "@gsap/react";
 
 export function InfoPanel({
   mission,
@@ -19,21 +20,38 @@ export function InfoPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
-  useEffect(() => {
-    if (!panelRef.current) return;
-    gsap.from(panelRef.current, {
-      x: 100,
-      opacity: 0,
-      duration: 0.6,
-      ease: "power3.out",
-    });
-  }, []);
+  useGSAP(
+    () => {
+      if (!panelRef.current) return;
+
+      gsap.from(`.${styles.panelBackground}`, {
+        transformOrigin: "top center",
+        scaleY: 0,
+        duration: 2,
+        ease: "expo.out",
+      });
+
+      gsap.from(`.${styles.titleLine}`, {
+        transformOrigin: "center left",
+        scaleX: 0,
+        duration: 2,
+        ease: "expo.out",
+        stagger: 0.5,
+      });
+    },
+    { scope: panelRef },
+  );
 
   return (
     <div ref={panelRef} className={styles.panel}>
+      <div className={styles.panelBackground} />
       <div className={styles.badge}>★ Mission Unlocked</div>
-      <h2 className={styles.title}>{mission.name}</h2>
-      <div className={styles.subtitle}>{mission.subtitle}</div>
+      <h2 className={styles.title}>
+        <span className={styles.titleText}>{mission.name}</span>
+
+        <span className={styles.titleLine} />
+        <span className={styles.titleLine} />
+      </h2>
       <div className={styles.date}>{mission.date}</div>
       <p className={styles.description}>{mission.description}</p>
 

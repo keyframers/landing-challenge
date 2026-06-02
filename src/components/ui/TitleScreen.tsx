@@ -144,8 +144,10 @@ clamp:false
           ease: "power2.out",
           stagger: 0.4,
         },
-        "-=1.5",
+        "-=2",
       );
+
+      tl.timeScale(3);
     },
     { scope: containerRef },
   );
