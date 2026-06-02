@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import styles from "./CrashOverlay.module.css";
 import Button from "./Button";
+import { useModalKeyboard } from "./useModalKeyboard";
 
 interface CrashOverlayProps {
   type: "crashed" | "missed";
@@ -19,6 +20,7 @@ export default function CrashOverlay({
   onControls,
 }: CrashOverlayProps) {
   const ref = useRef<HTMLDivElement>(null);
+  useModalKeyboard(ref);
 
   useEffect(() => {
     if (!ref.current) return;

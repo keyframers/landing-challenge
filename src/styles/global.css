@@ -24,6 +24,14 @@ html {
   font-size: clamp(13px, 1.6vw, 22px);
 }
 
+/* On mobile, viewport width is too small for 1.6vw to be legible,
+   so bump the floor up. ~15px at 390px wide. */
+@media (max-width: 768px) {
+  html {
+    font-size: clamp(15px, 4vw, 22px);
+  }
+}
+
 html,
 body {
   margin: 0;

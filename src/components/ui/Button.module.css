@@ -22,13 +22,15 @@
   transition: border-width 0.3s;
 }
 
-.root:hover {
+.root:hover,
+.root:focus {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--dark);
 }
 
-.root:hover::before {
+.root:hover::before,
+.root:focus::before {
   border-width: 4px;
 }
 

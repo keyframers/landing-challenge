@@ -6,6 +6,7 @@ import SplitText from "gsap/SplitText";
 import InfoPanelLabel from "./InfoPanelLabel";
 import Button from "./Button";
 import MissionImages from "./MissionImages";
+import { useModalKeyboard } from "./useModalKeyboard";
 
 interface InfoPanelProps {
   mission: MissionData;
@@ -26,6 +27,7 @@ export default function InfoPanel({
   showRoverButton,
 }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  useModalKeyboard(panelRef);
 
   useGSAP(
     () => {
