@@ -28,6 +28,8 @@ interface TitleScreenProps {
 export function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
+
   useGSAP(
     () => {
       if (!containerRef.current) return;
@@ -35,6 +37,7 @@ export function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
       let title = SplitText.create(`.${styles.title}`, { type: "chars" });
 
       const tl = gsap.timeline();
+      tlRef.current = tl;
 
       tl.addLabel("title-start");
 
@@ -147,13 +150,17 @@ clamp:false
         "-=2",
       );
 
-      tl.timeScale(3);
+      // TODO: CASSIE -- Can we add a Click to speed up the timeline?
     },
     { scope: containerRef },
   );
 
   return (
-    <div ref={containerRef} className={styles.container}>
+    <div
+      ref={containerRef}
+      onClick={() => tlRef.current?.timeScale(7)}
+      className={styles.container}
+    >
       <div className={styles.subtitle}>Explore the Apollo Missions</div>
       <h1 className={styles.title}>Lunar Landing</h1>
       <div className={styles.buttonGroup}>
