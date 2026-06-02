@@ -1,9 +1,8 @@
 .images {
-  padding: 4rem;
+  padding: 2rem;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: end;
-  align-items: start;
+  justify-content: center;
+  align-items: stretch;
   gap: 1rem;
 }
 
@@ -21,12 +20,12 @@
 }
 
 .image {
-  flex: 0 1 calc(50% - 0.5rem);
+  flex: 1 1 auto;
   border-radius: 10px;
   overflow: hidden;
-  /* display: flex;
+  display: flex;
   align-items: stretch;
-  justify-content: end; */
+  justify-content: end;
 }
 
 .image img {
@@ -35,4 +34,5 @@
   width: 100%;
   height: auto;
   mix-blend-mode: overlay;
+  object-fit: cover;
 }

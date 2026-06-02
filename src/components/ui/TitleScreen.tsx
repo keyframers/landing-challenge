@@ -10,14 +10,7 @@ import Physics2DPlugin from "gsap/Physics2DPlugin";
 import Button from "./Button";
 import { RoughEase } from "gsap/EasePack";
 
-gsap.registerPlugin(
-  useGSAP,
-  SplitText,
-  CustomEase,
-  RoughEase,
-  PhysicsPropsPlugin,
-  Physics2DPlugin,
-);
+gsap.registerPlugin(useGSAP, SplitText, CustomEase, RoughEase, PhysicsPropsPlugin, Physics2DPlugin);
 
 interface TitleScreenProps {
   onLaunch: () => void;
@@ -25,11 +18,7 @@ interface TitleScreenProps {
   onInfo: () => void;
 }
 
-export default function TitleScreen({
-  onLaunch,
-  onBrowse,
-  onInfo,
-}: TitleScreenProps) {
+export default function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tlRef = useRef<gsap.core.Timeline | null>(null);
@@ -40,6 +29,8 @@ export default function TitleScreen({
 
       const tl = gsap.timeline();
       tlRef.current = tl;
+
+      tl.set(`.${styles.buttonGroup} button`, { opacity: 0 });
 
       tl.addLabel("title-start");
 
@@ -53,7 +44,7 @@ export default function TitleScreen({
           rotationX: 40,
           ease: CustomEase.create(
             "custom",
-            "M0,0 C0.126,0.382 0.187,0.558 0.317,0.732 0.429,0.883 0.596,1.036 0.657,1 0.779,0.923 0.881,1 1,1 ",
+            "M0,0 C0.126,0.382 0.187,0.558 0.317,0.732 0.429,0.883 0.596,1.036 0.657,1 0.779,0.923 0.881,1 1,1 "
           ),
           /*CustomEase.create(
           "custom",
@@ -71,7 +62,7 @@ export default function TitleScreen({
             amount: 0.8,
           },
         },
-        "start",
+        "start"
       );
 
       tl.to(
@@ -92,7 +83,7 @@ randomize:true,
 clamp:false
 })`,
         },
-        "title-start",
+        "title-start"
       );
 
       tl.addLabel("title-end");
@@ -115,7 +106,7 @@ randomize:true,
 clamp:false
 })`,
         },
-        "title-end-=2",
+        "title-end-=2"
       );
 
       const subtitleChars = SplitText.create(`.${styles.subtitle}`, {
@@ -134,13 +125,12 @@ clamp:false
             amount: 0.4,
           },
         },
-        "title-end-=1",
+        "title-end-=1"
       );
 
       tl.fromTo(
         `.${styles.buttonGroup} button`,
         {
-          autoAlpha: 0,
           y: 20,
         },
         {
@@ -150,12 +140,12 @@ clamp:false
           ease: "power2.out",
           stagger: 0.4,
         },
-        "-=2",
+        "-=2"
       );
 
       // TODO: CASSIE -- Can we add a Click to speed up the timeline?
     },
-    { scope: containerRef },
+    { scope: containerRef }
   );
 
   return (
