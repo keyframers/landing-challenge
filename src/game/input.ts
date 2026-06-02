@@ -47,11 +47,7 @@ export class InputManager {
 
   private handleKeyUp = (e: KeyboardEvent) => {
     this.mapKey(e.code, false);
-    if (
-      ["ArrowLeft", "ArrowRight", "ArrowUp", "KeyA", "KeyD", "KeyW", "Space"].includes(
-        e.code,
-      )
-    ) {
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "KeyA", "KeyD", "KeyW", "Space"].includes(e.code)) {
       e.preventDefault();
     }
   };
@@ -60,15 +56,13 @@ export class InputManager {
     const value = pressed ? 1 : 0;
     switch (code) {
       case "ArrowLeft":
-      case "KeyA":
         this.state.left = value;
         break;
       case "ArrowRight":
-      case "KeyD":
         this.state.right = value;
         break;
       case "ArrowUp":
-      case "KeyW":
+      case "KeyA":
       case "Space":
         this.state.up = value;
         break;
