@@ -5,6 +5,7 @@ import {
   ROVER_WIDTH,
   ROVER_HEIGHT,
   TERRAIN_SEGMENT_SIZE,
+  LUNAR_ROVER_MASS,
 } from './constants';
 import { tuning } from './tuning';
 
@@ -52,8 +53,8 @@ function createVehicleColliderDesc(mode: VehicleColliderMode): RAPIER.ColliderDe
   if (mode === 'rover') {
     return RAPIER.ColliderDesc.roundCuboid(ROVER_WIDTH / 2, ROVER_HEIGHT / 2, 0.25)
       .setFriction(1.4)
-      .setRestitution(0.02)
-      .setDensity(6.0);
+      .setRestitution(0)
+      .setDensity(0.1);
   }
 
   return RAPIER.ColliderDesc.cuboid(LANDER_WIDTH / 2, LANDER_HEIGHT / 2)
@@ -94,14 +95,19 @@ export function replaceVehicleCollider(
   );
 
   if (mode === 'rover') {
+    const inertia =
+      (LUNAR_ROVER_MASS * (ROVER_WIDTH * ROVER_WIDTH + ROVER_HEIGHT * ROVER_HEIGHT)) /
+      12;
     body.rigidBody.setAdditionalMassProperties(
-      20,
-      { x: 0, y: ROVER_HEIGHT * 0.35 },
-      25,
+      LUNAR_ROVER_MASS,
+      { x: 0, y: ROVER_HEIGHT * 0.2 },
+      inertia,
       true,
     );
+    body.rigidBody.setAngularDamping(3.5);
   } else {
     body.rigidBody.setAdditionalMass(0, true);
+    body.rigidBody.setAngularDamping(0.5);
   }
 }
 

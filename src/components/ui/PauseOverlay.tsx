@@ -2,10 +2,13 @@ import styles from "./PauseOverlay.module.css";
 
 interface PauseOverlayProps {
   onResume: () => void;
-  onQuit: () => void;
+  onExploreMissions: () => void;
 }
 
-export function PauseOverlay({ onResume, onQuit }: PauseOverlayProps) {
+export function PauseOverlay({
+  onResume,
+  onExploreMissions,
+}: PauseOverlayProps) {
   return (
     <div className={styles.overlay}>
       <div className={styles.content}>
@@ -18,10 +21,10 @@ export function PauseOverlay({ onResume, onQuit }: PauseOverlayProps) {
             Resume
           </button>
           <button
-            onClick={onQuit}
+            onClick={onExploreMissions}
             className={`${styles.button} ${styles.secondaryButton}`}
           >
-            Quit
+            Explore Missions
           </button>
         </div>
       </div>

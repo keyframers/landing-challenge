@@ -7,11 +7,12 @@ import {
 } from './constants';
 import { tuning } from './tuning';
 import { rapier, type RoverBody } from './physics';
-import { applyThrust } from './physics';
 import type { InputState } from './input';
 
-export const ROVER_WHEEL_OFFSETS = [-1.1, 0, 1.1];
+export const ROVER_WHEEL_OFFSETS = [-0.95, 0.95];
 const WIREFRAME_COLOR = 0xffffff;
+const WHEEL_MOUNT_Y = ROVER_HEIGHT * 0.2;
+const DRIVE_FORCE_SPLIT = 1 / ROVER_WHEEL_OFFSETS.length;
 
 export interface Rover {
   container: Container;
@@ -145,21 +146,16 @@ export function updateRoverPhysics(
 ) {
   const body = rover.body.rigidBody;
   const driveInput = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  rover.wheelDriveInput = driveInput;
-  rover.wheelRotation += driveInput * tuning.roverWheelSpinSpeed * dt;
-
-  rover.roverBoosting = input.up;
-  if (rover.roverBoosting) {
-    applyThrust(body, tuning.roverBoostForce * dt, { x: 1, y: 0 });
-  }
-
+  rover.roverBoosting = false;
   rover.isGrounded = false;
-  let groundAngleX = 0;
-  let groundAngleY = 0;
+
+  let averageTangentX = 0;
+  let averageTangentY = 0;
   let contacts = 0;
+  let nearestGround = Infinity;
 
   for (let i = 0; i < ROVER_WHEEL_OFFSETS.length; i++) {
-    const mount = localPoint(body, ROVER_WHEEL_OFFSETS[i], ROVER_HEIGHT * 0.1);
+    const mount = localPoint(body, ROVER_WHEEL_OFFSETS[i], WHEEL_MOUNT_Y);
     const down = localVector(body, 0, 1);
     const ray = new rapier.Ray(mount, down);
     const hit = world.castRayAndGetNormal(
@@ -176,69 +172,69 @@ export function updateRoverPhysics(
       continue;
     }
 
-    const compression = tuning.roverSuspensionLength - hit.timeOfImpact;
     const hitPoint = ray.pointAt(hit.timeOfImpact);
-    const pointVel = body.velocityAtPoint(hitPoint);
-    const alongSpringSpeed = pointVel.x * down.x + pointVel.y * down.y;
-    const springForce = Math.min(
-      tuning.roverSuspensionMaxForce,
-      Math.max(
-        0,
-        compression * tuning.roverSuspensionSpring +
-          alongSpringSpeed * tuning.roverSuspensionDamping,
+    const compression = tuning.roverSuspensionLength - hit.timeOfImpact;
+    const wheelVelocity = body.velocityAtPoint(hitPoint);
+    const springVelocity = wheelVelocity.x * down.x + wheelVelocity.y * down.y;
+    const suspensionForce = Math.max(
+      0,
+      Math.min(
+        tuning.roverSuspensionMaxForce,
+        compression * tuning.roverSuspensionSpring -
+          springVelocity * tuning.roverSuspensionDamping,
       ),
     );
 
-    body.applyImpulseAtPoint({
-      x: -down.x * springForce * dt,
-      y: -down.y * springForce * dt,
-    }, hitPoint, true);
+    body.applyImpulseAtPoint(
+      {
+        x: -down.x * suspensionForce * dt,
+        y: -down.y * suspensionForce * dt,
+      },
+      hitPoint,
+      true,
+    );
 
-    if (driveInput !== 0) {
-      let tangent = { x: hit.normal.y, y: -hit.normal.x };
-      const right = localVector(body, 1, 0);
-      if (tangent.x * right.x + tangent.y * right.y < 0) {
-        tangent = { x: -tangent.x, y: -tangent.y };
-      }
-      body.applyImpulseAtPoint({
-        x: tangent.x * driveInput * tuning.roverAccel * dt / ROVER_WHEEL_OFFSETS.length,
-        y: tangent.y * driveInput * tuning.roverAccel * dt / ROVER_WHEEL_OFFSETS.length,
-      }, hitPoint, true);
-      groundAngleX += tangent.x;
-      groundAngleY += tangent.y;
+    let tangent = { x: hit.normal.y, y: -hit.normal.x };
+    const right = localVector(body, 1, 0);
+    if (tangent.x * right.x + tangent.y * right.y < 0) {
+      tangent = { x: -tangent.x, y: -tangent.y };
     }
 
+    if (driveInput !== 0) {
+      body.applyImpulseAtPoint(
+        {
+          x: tangent.x * driveInput * tuning.roverAccel * DRIVE_FORCE_SPLIT * dt,
+          y: tangent.y * driveInput * tuning.roverAccel * DRIVE_FORCE_SPLIT * dt,
+        },
+        hitPoint,
+        true,
+      );
+    }
+
+    averageTangentX += tangent.x;
+    averageTangentY += tangent.y;
+    nearestGround = Math.min(nearestGround, hit.timeOfImpact);
     rover.wheelTravel[i] = hit.timeOfImpact;
     rover.isGrounded = true;
     contacts++;
   }
 
-  if (rover.isGrounded) {
-    const tangent =
-      contacts > 0
-        ? { x: groundAngleX || Math.cos(rover.terrainAngle), y: groundAngleY || Math.sin(rover.terrainAngle) }
-        : { x: Math.cos(rover.terrainAngle), y: Math.sin(rover.terrainAngle) };
-    const tangentLength = Math.hypot(tangent.x, tangent.y) || 1;
-    tangent.x /= tangentLength;
-    tangent.y /= tangentLength;
-
-    const vel = body.linvel();
-    const tangentSpeed = vel.x * tangent.x + vel.y * tangent.y;
-    const clampedSpeed = Math.max(
-      -tuning.roverMaxSpeed,
-      Math.min(tuning.roverMaxSpeed, tangentSpeed),
-    );
-
-    if (clampedSpeed !== tangentSpeed) {
-      const delta = clampedSpeed - tangentSpeed;
-      body.setLinvel({
-        x: vel.x + tangent.x * delta,
-        y: vel.y + tangent.y * delta,
-      }, true);
-    }
-
-    body.setAngvel(body.angvel() * 0.9, true);
+  if (contacts > 0) {
+    rover.terrainAngle = Math.atan2(averageTangentY, averageTangentX);
+    rover.terrainDistance = nearestGround;
+  } else {
+    rover.terrainDistance = Infinity;
   }
+
+  const vel = body.linvel();
+  const speed = Math.hypot(vel.x, vel.y);
+  if (speed > tuning.roverMaxSpeed) {
+    const scale = tuning.roverMaxSpeed / speed;
+    body.setLinvel({ x: vel.x * scale, y: vel.y * scale }, true);
+  }
+
+  rover.wheelDriveInput = Math.sign(vel.x);
+  rover.wheelRotation += vel.x * tuning.roverWheelSpinSpeed * 0.08 * dt;
 }
 
 export function syncRoverGraphics(rover: Rover) {

@@ -137,6 +137,47 @@ function flattenLandingZones(heights: number[], landingZones: LandingZone[]) {
   }
 }
 
+function addRoverAffordances(heights: number[], landingZones: LandingZone[]) {
+  function nearLandingZone(x: number) {
+    return landingZones.some(
+      (zone) => x >= zone.x - 36 && x <= zone.x + zone.width + 36,
+    );
+  }
+
+  for (let i = 0; i < heights.length; i++) {
+    const x = i * TERRAIN_SEGMENT_SIZE;
+    if (nearLandingZone(x)) continue;
+
+    for (let center = 180; center < TERRAIN_TOTAL_WIDTH; center += 340) {
+      const t = Math.abs((x - center) / 58);
+      if (t < 1) {
+        heights[i] += (1 - Math.cos(t * Math.PI * 2)) * 5;
+      }
+    }
+
+    for (let center = 360; center < TERRAIN_TOTAL_WIDTH; center += 520) {
+      const t = Math.abs((x - center) / 72);
+      if (t < 1) {
+        heights[i] += Math.cos(t * Math.PI) * 12 + 12;
+      }
+
+      const leftLip = Math.abs((x - (center - 72)) / 26);
+      const rightLip = Math.abs((x - (center + 72)) / 26);
+      if (leftLip < 1) heights[i] -= (1 - leftLip) * 16;
+      if (rightLip < 1) heights[i] -= (1 - rightLip) * 16;
+    }
+
+    for (let center = 620; center < TERRAIN_TOTAL_WIDTH; center += 700) {
+      const plateau = Math.abs(x - center);
+      if (plateau < 56) {
+        heights[i] -= 26;
+      } else if (plateau < 106) {
+        heights[i] -= (1 - (plateau - 56) / 50) * 26;
+      }
+    }
+  }
+}
+
 export function generateForegroundHeightmap(
   totalWidth: number,
   roughness: number,
@@ -162,6 +203,8 @@ export function generateForegroundHeightmap(
   }
 
   smoothHeights(heights, 3);
+  addRoverAffordances(heights, landingZones);
+  smoothHeights(heights, 1);
   flattenLandingZones(heights, landingZones);
   clampTerrainSlopes(heights);
   smoothHeights(heights, 1);
@@ -214,6 +257,45 @@ export function generateJaggedHeightmap(
 
   clampTerrainSlopes(heights);
   smoothHeights(heights, 2);
+  return heights;
+}
+
+export function generateVisualForegroundHeightmap(
+  totalWidth: number,
+  mainHeights: number[],
+  jaggedness = 1,
+  seed = 0.83,
+): number[] {
+  const random = seededRandom(seed * 2147483647);
+  const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
+  const amount = Math.max(0, jaggedness);
+  const controlStep = Math.max(4, 26 - amount * 12);
+  const controls: number[] = [];
+
+  for (let x = 0; x <= totalWidth + controlStep; x += controlStep) {
+    const mainY = getTerrainHeightAt(mainHeights, x);
+    const rockyPeak = random() > Math.max(0.28, 0.88 - amount * 0.18);
+    const low = 28 - amount * 8;
+    const high = 40 + amount * 52;
+    const offset = rockyPeak ? 12 + random() * 14 * amount : low + random() * high;
+    controls.push(mainY + offset);
+  }
+
+  const heights: number[] = [];
+  for (let i = 0; i < numPoints; i++) {
+    const x = i * TERRAIN_SEGMENT_SIZE;
+    const ci = Math.floor(x / controlStep);
+    const t = (x - ci * controlStep) / controlStep;
+    const eased = t < 0.5 ? t * 1.35 : 1 - (1 - t) * 0.7;
+    const y0 = controls[ci] ?? TERRAIN_BASE_HEIGHT;
+    const y1 = controls[ci + 1] ?? y0;
+    const jagged =
+      Math.sin(x * (0.45 + amount * 0.45)) * 3 * amount +
+      Math.sin(x * (0.13 + amount * 0.14)) * 5 * amount;
+    const mainY = getTerrainHeightAt(mainHeights, x);
+    heights.push(Math.max(y0 * (1 - eased) + y1 * eased + jagged, mainY + 12));
+  }
+
   return heights;
 }
 
@@ -275,6 +357,7 @@ export function createLandingZoneMarker(zone: LandingZone): Graphics {
 export interface TerrainSystem {
   foregroundHeights: number[];
   middleHeights: number[];
+  visualForegroundHeights: number[];
   surfaceHeights: number[];
   landingZones: LandingZone[];
   layers: TerrainLayer[];
@@ -282,7 +365,7 @@ export interface TerrainSystem {
 }
 
 export function redrawTerrainSystem(terrain: TerrainSystem) {
-  const [bgLayer, midLayer, fgLayer] = terrain.layers;
+  const [bgLayer, midLayer, mainLayer, visualFgLayer] = terrain.layers;
   bgLayer.container.removeChildren();
   bgLayer.container.addChild(
     createTerrainGraphics(terrain.layers[0].heights, 0x171726, 0.55),
@@ -291,9 +374,13 @@ export function redrawTerrainSystem(terrain: TerrainSystem) {
   midLayer.container.addChild(
     createTerrainGraphics(terrain.middleHeights, 0x252536, 0.85),
   );
-  fgLayer.container.removeChildren();
-  fgLayer.container.addChild(
+  mainLayer.container.removeChildren();
+  mainLayer.container.addChild(
     createTerrainGraphics(terrain.foregroundHeights, 0x3a3a4a, 1.0),
+  );
+  visualFgLayer.container.removeChildren();
+  visualFgLayer.container.addChild(
+    createTerrainGraphics(terrain.visualForegroundHeights, 0x11111a, 1.0),
   );
 
   terrain.landingZoneMarkers.removeChildren();
@@ -331,6 +418,11 @@ export function createTerrainSystem(): TerrainSystem {
   );
   const surfaceHeights = combineSurfaceHeights(foregroundHeights, middleHeights);
   const bgHeights = generateHeightmap(TERRAIN_TOTAL_WIDTH, 0.25, [], 0.73);
+  const visualForegroundHeights = generateVisualForegroundHeightmap(
+    TERRAIN_TOTAL_WIDTH,
+    surfaceHeights,
+    tuning.foregroundJaggedness,
+  );
 
   const bgLayer: TerrainLayer = {
     container: new Container(),
@@ -359,6 +451,15 @@ export function createTerrainSystem(): TerrainSystem {
     createTerrainGraphics(foregroundHeights, 0x3a3a4a, 1.0),
   );
 
+  const visualFgLayer: TerrainLayer = {
+    container: new Container(),
+    heights: visualForegroundHeights,
+    parallaxFactor: 1.28,
+  };
+  visualFgLayer.container.addChild(
+    createTerrainGraphics(visualForegroundHeights, 0x11111a, 1.0),
+  );
+
   const landingZoneMarkers = new Container();
   for (const zone of landingZones) {
     const marker = createLandingZoneMarker(zone);
@@ -371,9 +472,10 @@ export function createTerrainSystem(): TerrainSystem {
   return {
     foregroundHeights,
     middleHeights,
+    visualForegroundHeights,
     surfaceHeights,
     landingZones,
-    layers: [bgLayer, midLayer, fgLayer],
+    layers: [bgLayer, midLayer, fgLayer, visualFgLayer],
     landingZoneMarkers,
   };
 }
