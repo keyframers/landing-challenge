@@ -13,6 +13,7 @@ import type { InputState } from './input';
 import type { ParticleSystem } from './particles';
 
 const WIREFRAME_COLOR = 0xffffff;
+const LANDER_SVG_ASPECT = 753 / 695;
 let landerTexture: Texture | null = null;
 
 export async function loadLanderGraphics() {
@@ -43,8 +44,8 @@ export function drawLanderGraphics(container: Container) {
   const hh = (LANDER_HEIGHT / 2) * ppm;
   const sprite = new Sprite(landerTexture ?? Texture.WHITE);
   sprite.anchor.set(0.5);
-  sprite.width = hw * 2;
   sprite.height = hh * 2;
+  sprite.width = sprite.height * LANDER_SVG_ASPECT;
   sprite.label = 'landerSprite';
   container.addChild(sprite);
 

@@ -18,6 +18,7 @@ import {
   generateVisualForegroundHeightmap,
   getTerrainHeightAt,
   redrawTerrainSystem,
+  updateLandingZoneProximity,
 } from './terrain';
 import {
   createCamera,
@@ -45,7 +46,7 @@ import {
   type Rover,
 } from './rover';
 import { ParticleSystem } from './particles';
-import { createStarfield, createEarth } from './starfield';
+import { createStarfield, createEarth, loadEarthGraphics } from './starfield';
 import { InputManager } from './input';
 import { tuning } from './tuning';
 import {
@@ -136,7 +137,11 @@ export async function createGame(
   });
   onProgress?.(0.6);
 
-  await Promise.all([loadLanderGraphics(), loadRoverGraphics()]);
+  await Promise.all([
+    loadLanderGraphics(),
+    loadRoverGraphics(),
+    loadEarthGraphics(),
+  ]);
   onProgress?.(0.75);
 
   const actor = createActor(
@@ -196,7 +201,7 @@ export async function createGame(
     if (force || jaggednessChanged) {
       terrain.visualForegroundHeights = generateVisualForegroundHeightmap(
         TERRAIN_TOTAL_WIDTH,
-        terrain.surfaceHeights,
+        terrain.foregroundHeights,
         tuning.foregroundJaggedness,
       );
       const foregroundVisualLayer = terrain.layers.at(-1);
@@ -704,6 +709,20 @@ export async function createGame(
     applyRenderMode();
 
     const state = actor.getSnapshot();
+
+    // Fade landing-zone indicators out as the lander closes in.
+    if (vehicle && !vehicle.destroyed) {
+      const t = vehicle.body.rigidBody.translation();
+      updateLandingZoneProximity(terrain, state.context.currentMission, t.x, t.y);
+    } else {
+      updateLandingZoneProximity(
+        terrain,
+        state.context.currentMission,
+        null,
+        null,
+      );
+    }
+
     // Clamp delta so a long stall (e.g. backgrounded tab) can't spiral physics.
     const delta = Math.min(ticker.deltaMS / 1000, 0.05);
 

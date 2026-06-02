@@ -1,6 +1,13 @@
-import { Container, Graphics } from 'pixi.js';
+import { Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import gsap from 'gsap';
+import earthSvgUrl from '../data/Earth.svg?url';
 import { STARFIELD_COUNT } from './constants';
+
+let earthTexture: Texture | null = null;
+
+export async function loadEarthGraphics() {
+  earthTexture = await Assets.load<Texture>(earthSvgUrl);
+}
 
 export function createStarfield(width: number, height: number): Container {
   const container = new Container();
@@ -36,23 +43,11 @@ export function createStarfield(width: number, height: number): Container {
 export function createEarth(): Container {
   const container = new Container();
 
-  const glow = new Graphics();
-  glow.circle(0, 0, 30);
-  glow.fill({ color: 0x4488cc, alpha: 0.15 });
-  container.addChild(glow);
-
-  const earth = new Graphics();
-  earth.circle(0, 0, 15);
-  earth.fill({ color: 0x4477aa });
-
-  const land = new Graphics();
-  land.circle(-3, -2, 6);
-  land.fill({ color: 0x55aa55, alpha: 0.6 });
-  land.circle(4, 4, 4);
-  land.fill({ color: 0x55aa55, alpha: 0.5 });
-
+  const earth = new Sprite(earthTexture ?? Texture.WHITE);
+  earth.anchor.set(0.5);
+  earth.width = 46;
+  earth.height = 46;
   container.addChild(earth);
-  container.addChild(land);
 
   return container;
 }
