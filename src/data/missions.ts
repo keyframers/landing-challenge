@@ -5,7 +5,7 @@ export interface MissionData {
   date: string;
   description: string;
   crew: string[];
-  images: { src: string; caption: string }[];
+  images: { src: string; caption?: string }[];
   terrain: {
     roughness: number;
     craterDensity: number;
@@ -18,18 +18,18 @@ export interface MissionData {
 
 export const missions: MissionData[] = [
   {
-    id: 'apollo-11',
-    name: 'Apollo 11',
-    subtitle: 'First Crewed Moon Landing',
-    date: 'July 20, 1969',
+    id: "apollo-11",
+    name: "Apollo 11",
+    subtitle: "First Crewed Moon Landing",
+    date: "July 20, 1969",
     description:
-      'Apollo 11 was the first manned mission to land on the Moon. A historic leap for mankind.',
-    crew: ['Neil Armstrong', 'Buzz Aldrin', 'Michael Collins'],
+      "Apollo 11 was the first manned mission to land on the Moon. A historic leap for mankind.",
+    crew: ["Neil Armstrong", "Buzz Aldrin", "Michael Collins"],
     images: [
-      { src: '/images/placeholder.svg', caption: 'Moon Landing' },
-      { src: '/images/placeholder.svg', caption: 'One Small Step' },
-      { src: '/images/placeholder.svg', caption: 'Earthrise' },
-      { src: '/images/placeholder.svg', caption: 'Eagle Lander' },
+      { src: "/images/apollo_11/1.jpg" },
+      { src: "/images/apollo_11/2.webp" },
+      { src: "/images/apollo_11/3.jpg" },
+      { src: "/images/apollo_11/4.jpg" },
     ],
     terrain: {
       roughness: 0.3,
@@ -41,18 +41,17 @@ export const missions: MissionData[] = [
     roverAvailable: false,
   },
   {
-    id: 'apollo-12',
-    name: 'Apollo 12',
-    subtitle: 'Precision Landing',
-    date: 'November 19, 1969',
+    id: "apollo-12",
+    name: "Apollo 12",
+    subtitle: "Precision Landing",
+    date: "November 19, 1969",
     description:
-      'Apollo 12 demonstrated precision landing capability, touching down near Surveyor 3.',
-    crew: ['Pete Conrad', 'Alan Bean', 'Richard Gordon'],
+      "Apollo 12 demonstrated precision landing capability, touching down near Surveyor 3.",
+    crew: ["Pete Conrad", "Alan Bean", "Richard Gordon"],
     images: [
-      { src: '/images/placeholder.svg', caption: 'Precision Landing' },
-      { src: '/images/placeholder.svg', caption: 'Surveyor 3 Visit' },
-      { src: '/images/placeholder.svg', caption: 'Surface EVA' },
-      { src: '/images/placeholder.svg', caption: 'Intrepid Lander' },
+      { src: "/images/apollo_12/1.jpg" },
+      { src: "/images/apollo_12/2.jpg" },
+      { src: "/images/apollo_12/3.jpg" },
     ],
     terrain: {
       roughness: 0.4,
@@ -64,18 +63,17 @@ export const missions: MissionData[] = [
     roverAvailable: false,
   },
   {
-    id: 'apollo-14',
-    name: 'Apollo 14',
-    subtitle: 'Fra Mauro Highlands',
-    date: 'February 5, 1971',
+    id: "apollo-14",
+    name: "Apollo 14",
+    subtitle: "Fra Mauro Highlands",
+    date: "February 5, 1971",
     description:
-      'Apollo 14 explored the Fra Mauro highlands, the intended target of the ill-fated Apollo 13.',
-    crew: ['Alan Shepard', 'Edgar Mitchell', 'Stuart Roosa'],
+      "Apollo 14 explored the Fra Mauro highlands, the intended target of the ill-fated Apollo 13.",
+    crew: ["Alan Shepard", "Edgar Mitchell", "Stuart Roosa"],
     images: [
-      { src: '/images/placeholder.svg', caption: 'Fra Mauro Landing' },
-      { src: '/images/placeholder.svg', caption: 'Golf on the Moon' },
-      { src: '/images/placeholder.svg', caption: 'Cone Crater' },
-      { src: '/images/placeholder.svg', caption: 'Antares Lander' },
+      { src: "/images/apollo_14/1.jpg" },
+      { src: "/images/apollo_14/2.jpg" },
+      { src: "/images/apollo_14/3.webp" },
     ],
     terrain: {
       roughness: 0.5,
@@ -87,18 +85,17 @@ export const missions: MissionData[] = [
     roverAvailable: false,
   },
   {
-    id: 'apollo-15',
-    name: 'Apollo 15',
-    subtitle: 'First Lunar Rover',
-    date: 'July 30, 1971',
+    id: "apollo-15",
+    name: "Apollo 15",
+    subtitle: "First Lunar Rover",
+    date: "July 30, 1971",
     description:
-      'Apollo 15 was the first mission to use the Lunar Roving Vehicle, exploring Hadley Rille.',
-    crew: ['David Scott', 'James Irwin', 'Alfred Worden'],
+      "Apollo 15 was the first mission to use the Lunar Roving Vehicle, exploring Hadley Rille.",
+    crew: ["David Scott", "James Irwin", "Alfred Worden"],
     images: [
-      { src: '/images/placeholder.svg', caption: 'Hadley Rille' },
-      { src: '/images/placeholder.svg', caption: 'First Rover Drive' },
-      { src: '/images/placeholder.svg', caption: 'Mount Hadley' },
-      { src: '/images/placeholder.svg', caption: 'Falcon Lander' },
+      { src: "/images/apollo_15/1.webp" },
+      { src: "/images/apollo_15/2.webp" },
+      { src: "/images/apollo_15/3.webp" },
     ],
     terrain: {
       roughness: 0.6,
@@ -110,18 +107,18 @@ export const missions: MissionData[] = [
     roverAvailable: true,
   },
   {
-    id: 'apollo-16',
-    name: 'Apollo 16',
-    subtitle: 'Descartes Highlands',
-    date: 'April 21, 1972',
+    id: "apollo-16",
+    name: "Apollo 16",
+    subtitle: "Descartes Highlands",
+    date: "April 21, 1972",
     description:
-      'Apollo 16 explored the lunar highlands near the Descartes crater.',
-    crew: ['John Young', 'Charles Duke', 'Ken Mattingly'],
+      "Apollo 16 explored the lunar highlands near the Descartes crater.",
+    crew: ["John Young", "Charles Duke", "Ken Mattingly"],
     images: [
-      { src: '/images/placeholder.svg', caption: 'Descartes Landing' },
-      { src: '/images/placeholder.svg', caption: 'Rover Traverse' },
-      { src: '/images/placeholder.svg', caption: 'Stone Mountain' },
-      { src: '/images/placeholder.svg', caption: 'Orion Lander' },
+      { src: "/images/apollo_16/1.webp" },
+      { src: "/images/apollo_16/2.jpg" },
+      { src: "/images/apollo_16/3.webp" },
+      { src: "/images/apollo_16/4.webp" },
     ],
     terrain: {
       roughness: 0.7,
@@ -133,18 +130,17 @@ export const missions: MissionData[] = [
     roverAvailable: true,
   },
   {
-    id: 'apollo-17',
-    name: 'Apollo 17',
-    subtitle: 'Final Moon Mission',
-    date: 'December 11, 1972',
+    id: "apollo-17",
+    name: "Apollo 17",
+    subtitle: "Final Moon Mission",
+    date: "December 11, 1972",
     description:
-      'Apollo 17 was the last crewed mission to the Moon, exploring the Taurus-Littrow valley.',
-    crew: ['Gene Cernan', 'Harrison Schmitt', 'Ron Evans'],
+      "Apollo 17 was the last crewed mission to the Moon, exploring the Taurus-Littrow valley.",
+    crew: ["Gene Cernan", "Harrison Schmitt", "Ron Evans"],
     images: [
-      { src: '/images/placeholder.svg', caption: 'Taurus-Littrow' },
-      { src: '/images/placeholder.svg', caption: 'Last Moonwalk' },
-      { src: '/images/placeholder.svg', caption: 'Orange Soil' },
-      { src: '/images/placeholder.svg', caption: 'Challenger Lander' },
+      { src: "/images/apollo_17/1.jpg" },
+      { src: "/images/apollo_17/2.jpg" },
+      { src: "/images/apollo_17/3.jpg" },
     ],
     terrain: {
       roughness: 0.8,

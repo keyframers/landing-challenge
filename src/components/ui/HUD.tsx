@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import styles from "./HUD.module.css";
-import { tuning } from "../../game/tuning";
+import { useEffect, useRef } from 'react';
+import gsap from 'gsap';
+import styles from './HUD.module.css';
+import { tuning } from '../../game/tuning';
+import Button from './Button';
 
 interface HUDProps {
   fuel: number;
@@ -46,9 +47,9 @@ export default function HUD({
             onMissionSelect={onMissionSelect}
           />
         </div>
-        <button onClick={onPause} className={styles.pauseButton}>
+        <Button onClick={onPause} className={styles.pauseButton}>
           ⏸
-        </button>
+        </Button>
       </div>
 
       {/* Left panel - thrust gauge */}
@@ -58,7 +59,9 @@ export default function HUD({
         </div>
         <ThrustGauge level={thrustLevel} />
         <div className={`${styles.panelLabel} ${styles.fuelLabel}`}>Fuel</div>
-        <div className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}>
+        <div
+          className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}
+        >
           {Math.round(fuel)}%
         </div>
       </div>
@@ -94,15 +97,12 @@ function ThrustGauge({ level }: { level: number }) {
   const needle = useRef({ v: 0 });
 
   useEffect(() => {
-    const colorAt = gsap.utils.interpolate(
-      "rgba(255,255,255,0.08)",
-      "#ffcc00",
-    );
+    const colorAt = gsap.utils.interpolate('rgba(255,255,255,0.08)', '#ffcc00');
     const obj = needle.current;
     gsap.to(obj, {
       v: level,
       duration: 0.6,
-      ease: "expo.out",
+      ease: 'expo.out',
       overwrite: true,
       onUpdate: () => {
         const v = obj.v;
@@ -173,11 +173,11 @@ function MissionProgress({
         if (i < current) dotClass = styles.completed;
         else if (i === current) dotClass = styles.current;
         return (
-          <button
+          <Button
             key={i}
             onClick={() => onMissionSelect?.(i)}
-            className={`${styles.progressDot} ${dotClass} ${onMissionSelect ? styles.clickable : ""}`}
-            style={{ cursor: onMissionSelect ? "pointer" : "default" }}
+            className={`${styles.progressDot} ${dotClass} ${onMissionSelect ? styles.clickable : ''}`}
+            style={{ cursor: onMissionSelect ? 'pointer' : 'default' }}
           />
         );
       })}

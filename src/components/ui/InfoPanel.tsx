@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
-import type { MissionData } from '../../data/missions';
-import styles from './InfoPanel.module.css';
-import SplitText from 'gsap/SplitText';
-import InfoPanelLabel from './InfoPanelLabel';
-import Button from './Button';
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import type { MissionData } from "../../data/missions";
+import styles from "./InfoPanel.module.css";
+import SplitText from "gsap/SplitText";
+import InfoPanelLabel from "./InfoPanelLabel";
+import Button from "./Button";
+import MissionImages from "./MissionImages";
 
 interface InfoPanelProps {
   mission: MissionData;
@@ -13,7 +14,7 @@ interface InfoPanelProps {
   onDriveRover?: () => void;
   showRoverButton: boolean;
 }
-import { useGSAP } from '@gsap/react';
+import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP, SplitText);
 
@@ -25,7 +26,6 @@ export default function InfoPanel({
   showRoverButton,
 }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const [carouselIndex, setCarouselIndex] = useState(0);
 
   useGSAP(
     () => {
@@ -36,11 +36,11 @@ export default function InfoPanel({
       tl.from(
         `.${styles.panelBackground}`,
         {
-          transformOrigin: 'top center',
-          y: '-100%',
+          transformOrigin: "top center",
+          y: "-100%",
           skewY: -20,
           duration: 2,
-          ease: 'power4.out',
+          ease: "power4.out",
         },
         0,
       );
@@ -48,30 +48,30 @@ export default function InfoPanel({
       tl.from(
         `.${styles.titleLine}`,
         {
-          transformOrigin: 'center right',
-          x: '100%',
+          transformOrigin: "center right",
+          x: "100%",
           skewX: -20,
           duration: 2,
-          ease: 'power3.out',
+          ease: "power3.out",
           stagger: 0.5,
         },
         0,
       );
 
       let titleText = SplitText.create(`.${styles.titleText}`, {
-        type: 'chars',
+        type: "chars",
       });
       tl.from(
         titleText.chars,
         {
           // x: -80,
           // autoAlpha: 0,
-          y: '100%',
-          transformOrigin: 'bottom center',
-          ease: 'expo.out',
+          y: "100%",
+          transformOrigin: "bottom center",
+          ease: "expo.out",
           stagger: -0.05,
         },
-        '-=1.75',
+        "-=1.75",
       );
     },
     { scope: panelRef },
@@ -80,47 +80,38 @@ export default function InfoPanel({
   return (
     <div ref={panelRef} className={styles.panel}>
       <div className={styles.panelBackground} />
-      <div className={styles.badge}>★ Mission Unlocked</div>
-      <h2 className={styles.title}>
-        <span className={styles.titleText}>{mission.name}</span>
+      <div className={styles.panelContent}>
+        <div className={styles.badge}>★ Mission Unlocked</div>
+        <h2 className={styles.title}>
+          <span className={styles.titleText}>{mission.name}</span>
 
-        <span className={styles.titleLine} />
-        <span className={styles.titleLine} />
-      </h2>
-      <div className={styles.date}>{mission.date}</div>
-      <p className={styles.description}>{mission.description}</p>
+          <span className={styles.titleLine} />
+          <span className={styles.titleLine} />
+        </h2>
+        <div className={styles.date}>{mission.date}</div>
+        <p className={styles.description}>{mission.description}</p>
 
-      <InfoPanelLabel>Crew</InfoPanelLabel>
-      <div className={styles.crew}>{mission.crew.join(' · ')}</div>
+        <InfoPanelLabel>Crew</InfoPanelLabel>
+        <div className={styles.crew}>{mission.crew.join(" · ")}</div>
 
-      {/* Carousel */}
-      <div className={styles.carousel}>
-        {mission.images.map((img, i) => (
-          <div
-            key={i}
-            onClick={() => setCarouselIndex(i)}
-            className={`${styles.carouselItem} ${i === carouselIndex ? styles.selected : styles.unselected}`}
-          >
-            <div className={styles.carouselCaption}>{img.caption}</div>
-          </div>
-        ))}
+        <div className={styles.buttonGroup}>
+          {showRoverButton && (
+            <Button onClick={onDriveRover} className={styles.roverButton}>
+              Drive Rover
+            </Button>
+          )}
+          {onExploreMissions && (
+            <Button onClick={onExploreMissions} className={styles.roverButton}>
+              Explore
+            </Button>
+          )}
+          <Button onClick={onContinue} className={styles.continueButton}>
+            Continue →
+          </Button>
+        </div>
       </div>
 
-      <div className={styles.buttonGroup}>
-        {showRoverButton && (
-          <Button onClick={onDriveRover} className={styles.roverButton}>
-            Drive Rover
-          </Button>
-        )}
-        {onExploreMissions && (
-          <Button onClick={onExploreMissions} className={styles.roverButton}>
-            Explore
-          </Button>
-        )}
-        <Button onClick={onContinue} className={styles.continueButton}>
-          Continue →
-        </Button>
-      </div>
+      <MissionImages mission={mission} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import styles from "./CrashOverlay.module.css";
+import Button from "./Button";
 
 interface CrashOverlayProps {
   type: "crashed" | "missed";
@@ -41,30 +42,16 @@ export default function CrashOverlay({
         <div className={styles.title}>{title}</div>
         <p className={styles.subtitle}>{subtitle}</p>
         <div className={styles.buttonGroup}>
-          <button
-            onClick={onRetry}
-            className={`${styles.button} ${styles.primaryButton}`}
-          >
-            Try Again
-          </button>
-          <button
-            onClick={onSimulate}
-            className={`${styles.button} ${styles.secondaryButton}`}
-          >
+          <Button onClick={onRetry}>Try Again</Button>
+          <Button onClick={onSimulate} subtle>
             Simulate Landing
-          </button>
-          <button
-            onClick={onExplore}
-            className={`${styles.button} ${styles.secondaryButton}`}
-          >
+          </Button>
+          <Button onClick={onExplore} subtle>
             Explore Missions
-          </button>
-          <button
-            onClick={onControls}
-            className={`${styles.button} ${styles.secondaryButton}`}
-          >
+          </Button>
+          <Button onClick={onControls} subtle>
             Controls
-          </button>
+          </Button>
         </div>
       </div>
     </div>

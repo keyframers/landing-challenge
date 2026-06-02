@@ -10,6 +10,7 @@ import PauseOverlay from './ui/PauseOverlay';
 import InfoDialog from './ui/InfoDialog';
 import LoadingScreen from './ui/LoadingScreen';
 import { tuning } from '../game/tuning';
+import Button from './ui/Button';
 
 interface GameOverlayProps {
   actor: Actor<typeof gameMachine>;
@@ -162,7 +163,7 @@ export default function GameOverlay({
                 pointerEvents: 'auto',
               }}
             >
-              <button
+              <Button
                 onClick={() => actor.send({ type: 'RETURN_TO_LANDER' })}
                 style={{
                   padding: '0.6rem 1.5rem',
@@ -177,7 +178,7 @@ export default function GameOverlay({
                 }}
               >
                 Return to Lander
-              </button>
+              </Button>
             </div>
           )}
         </>
@@ -225,7 +226,7 @@ export default function GameOverlay({
               showRoverButton={false}
             />
           )}
-          <button
+          <Button
             onClick={() => actor.send({ type: 'EXIT_MANUAL' })}
             style={{
               position: 'absolute',
@@ -243,7 +244,7 @@ export default function GameOverlay({
             }}
           >
             Back to Title
-          </button>
+          </Button>
         </div>
       )}
     </div>

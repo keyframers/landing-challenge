@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import styles from "./InfoDialog.module.css";
+import Button from "./Button";
 
 interface InfoDialogProps {
   onClose: () => void;
@@ -38,9 +39,9 @@ export default function InfoDialog({ onClose }: InfoDialogProps) {
           descent speed and angle — too fast or too tilted and you'll crash.
           Each mission takes you to a new Apollo landing site.
         </p>
-        <button onClick={onClose} className={styles.closeButton}>
+        <Button onClick={onClose} className={styles.closeButton}>
           Got it
-        </button>
+        </Button>
       </div>
     </div>
   );
