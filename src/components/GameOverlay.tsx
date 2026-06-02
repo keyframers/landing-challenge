@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type PointerEvent } from "react";
 import type { Actor } from "xstate";
 import type { gameMachine } from "../machines/gameMachine";
 import { missions } from "../data/missions";
@@ -11,9 +11,11 @@ import InfoDialog from "./ui/InfoDialog";
 import LoadingScreen from "./ui/LoadingScreen";
 import { tuning } from "../game/tuning";
 import Button from "./ui/Button";
+import type { InputManager, InputState } from "../game/input";
 
 interface GameOverlayProps {
   actor: Actor<typeof gameMachine>;
+  input: InputManager;
   loadingProgress: number;
 }
 
@@ -27,7 +29,7 @@ function useActorState(actor: Actor<typeof gameMachine>) {
   );
 }
 
-export default function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
+export default function GameOverlay({ actor, input, loadingProgress }: GameOverlayProps) {
   const state = useActorState(actor);
   const ctx = state.context;
   const touchXRef = useRef<number | null>(null);
@@ -184,6 +186,8 @@ export default function GameOverlay({ actor, loadingProgress }: GameOverlayProps
               </Button>
             </div>
           )}
+
+          {state.matches({ playing: "descending" }) && <MobileJoystick input={input} />}
         </>
       )}
 
@@ -217,7 +221,7 @@ export default function GameOverlay({ actor, loadingProgress }: GameOverlayProps
             touchAction: "none",
           }}
         >
-          {currentMission && (
+          {ctx.manualMissionInView && currentMission && (
             <InfoPanel
               key={currentMission.id}
               mission={currentMission}
@@ -246,6 +250,101 @@ export default function GameOverlay({ actor, loadingProgress }: GameOverlayProps
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+function MobileJoystick({ input }: { input: InputManager }) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const rootRef = useRef<HTMLDivElement>(null);
+  const activePointerRef = useRef<number | null>(null);
+  const radius = 58;
+
+  useEffect(() => {
+    const query = window.matchMedia("(pointer: coarse), (max-width: 768px)");
+    const sync = () => setIsMobile(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => {
+      query.removeEventListener("change", sync);
+      input.setAnalog({ left: 0, right: 0, up: 0 });
+    };
+  }, [input]);
+
+  function setFromPointer(event: PointerEvent<HTMLDivElement>) {
+    const rect = rootRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const rawX = event.clientX - rect.left - rect.width / 2;
+    const rawY = event.clientY - rect.top - rect.height / 2;
+    const distance = Math.hypot(rawX, rawY);
+    const scale = distance > radius ? radius / distance : 1;
+    const x = rawX * scale;
+    const y = rawY * scale;
+    const normalizedX = Math.abs(x / radius) < 0.12 ? 0 : x / radius;
+    const normalizedY = Math.abs(y / radius) < 0.12 ? 0 : y / radius;
+    const next: InputState = {
+      left: Math.max(0, -normalizedX),
+      right: Math.max(0, normalizedX),
+      up: Math.max(0, -normalizedY),
+    };
+    setKnob({ x, y });
+    input.setAnalog(next);
+  }
+
+  function reset() {
+    activePointerRef.current = null;
+    setKnob({ x: 0, y: 0 });
+    input.setAnalog({ left: 0, right: 0, up: 0 });
+  }
+
+  if (!isMobile) return null;
+
+  return (
+    <div
+      ref={rootRef}
+      aria-label="Lander joystick"
+      onPointerDown={(event) => {
+        activePointerRef.current = event.pointerId;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setFromPointer(event);
+      }}
+      onPointerMove={(event) => {
+        if (activePointerRef.current === event.pointerId) setFromPointer(event);
+      }}
+      onPointerUp={reset}
+      onPointerCancel={reset}
+      style={{
+        position: "absolute",
+        left: "50%",
+        bottom: "max(1.25rem, env(safe-area-inset-bottom))",
+        width: "9rem",
+        height: "9rem",
+        marginLeft: "-4.5rem",
+        borderRadius: "50%",
+        border: "1px solid rgba(255,255,255,0.3)",
+        background: "rgba(10,10,20,0.34)",
+        boxShadow: "inset 0 0 24px rgba(255,255,255,0.08)",
+        pointerEvents: "auto",
+        touchAction: "none",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: "3.25rem",
+          height: "3.25rem",
+          marginLeft: "-1.625rem",
+          marginTop: "-1.625rem",
+          borderRadius: "50%",
+          background: "rgba(244,244,245,0.72)",
+          border: "1px solid rgba(255,255,255,0.9)",
+          transform: `translate(${knob.x}px, ${knob.y}px)`,
+          boxShadow: "0 8px 22px rgba(0,0,0,0.28)",
+        }}
+      />
     </div>
   );
 }

@@ -5,6 +5,11 @@ import { tuning } from '../game/tuning';
 import GameOverlay from './GameOverlay';
 import LoadingScreen from './ui/LoadingScreen';
 
+// Show the leva debug panel in dev, or when explicitly enabled via
+// PUBLIC_SHOW_LEVA=true. Hidden by default in production builds (e.g. on deploy).
+const showLeva =
+  import.meta.env.DEV || import.meta.env.PUBLIC_SHOW_LEVA === 'true';
+
 export function GameApp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<Game | null>(null);
@@ -157,11 +162,11 @@ export function GameApp() {
         }}
       />
       {game ? (
-        <GameOverlay actor={game.actor} loadingProgress={1} />
+        <GameOverlay actor={game.actor} input={game.input} loadingProgress={1} />
       ) : (
         <LoadingScreen progress={loadingProgress} />
       )}
-      <Leva collapsed />
+      <Leva collapsed hidden={!showLeva} />
     </div>
   );
 }

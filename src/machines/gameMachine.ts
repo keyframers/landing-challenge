@@ -13,6 +13,7 @@ export interface GameContext {
   angle: number;
   thrustLevel: number;
   browsePosition: number;
+  manualMissionInView: boolean;
   restartRequested: boolean;
 }
 
@@ -36,7 +37,7 @@ export type GameEvent =
   | { type: "RESUME" }
   | { type: "EXPLORE_MISSIONS" }
   | { type: "SCROLL"; position: number }
-  | { type: "SET_MANUAL_MISSION"; missionIndex: number }
+  | { type: "SET_MANUAL_MISSION"; missionIndex: number | null }
   | { type: "JUMP_TO_MISSION"; missionIndex: number }
   | { type: "CONTROLS_PRESSED" }
   | { type: "EXIT_MANUAL" }
@@ -86,6 +87,7 @@ export const gameMachine = setup({
     resetManualBrowse: assign({
       currentMission: 0,
       browsePosition: 0,
+      manualMissionInView: true,
     }),
     setBrowsePosition: assign({
       browsePosition: ({ event, context }) => {
@@ -96,7 +98,13 @@ export const gameMachine = setup({
     setManualMission: assign({
       currentMission: ({ event, context }) => {
         if (event.type !== "SET_MANUAL_MISSION") return context.currentMission;
-        return event.missionIndex;
+        return event.missionIndex ?? context.currentMission;
+      },
+      manualMissionInView: ({ event, context }) => {
+        if (event.type !== "SET_MANUAL_MISSION") {
+          return context.manualMissionInView;
+        }
+        return event.missionIndex != null;
       },
     }),
     unlockRover: assign({ roverUnlocked: true }),
@@ -149,6 +157,7 @@ export const gameMachine = setup({
     angle: 0,
     thrustLevel: 0,
     browsePosition: 0,
+    manualMissionInView: true,
     restartRequested: false,
   },
   on: {
@@ -182,7 +191,6 @@ export const gameMachine = setup({
     playing: {
       initial: "descending",
       on: {
-        PAUSE: ".paused",
         KONAMI: {
           target: ".rover",
           actions: "unlockRover",
@@ -196,6 +204,7 @@ export const gameMachine = setup({
         descending: {
           entry: "resetFuel",
           on: {
+            PAUSE: "paused",
             LANDED: {
               target: "landed",
               actions: "completeMission",
@@ -250,6 +259,7 @@ export const gameMachine = setup({
 
         simulatingLanding: {
           on: {
+            PAUSE: "paused",
             LANDED: {
               target: "landed",
               actions: "completeMission",
@@ -259,6 +269,7 @@ export const gameMachine = setup({
 
         rover: {
           on: {
+            PAUSE: "paused",
             RETURN_TO_LANDER: "descending",
           },
         },

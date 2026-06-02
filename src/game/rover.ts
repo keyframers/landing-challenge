@@ -107,7 +107,7 @@ export function updateRoverPhysics(
   world: RAPIER.World,
 ) {
   const body = rover.body.rigidBody;
-  const driveInput = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const driveInput = input.right - input.left;
   rover.roverBoosting = false;
   rover.isGrounded = false;
 
