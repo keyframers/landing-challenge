@@ -30,6 +30,7 @@ export interface TerrainLayer {
   container: Container;
   heights: number[];
   parallaxFactor: number;
+  xOffset?: number;
 }
 
 export interface LandingZone {
@@ -665,7 +666,13 @@ export function createTerrainSystem(): TerrainSystem {
     foregroundHeights,
     middleHeights,
   );
-  const bgHeights = generateHeightmap(TERRAIN_TOTAL_WIDTH, 0.25, [], 0.73);
+  const backgroundMargin = TERRAIN_TOTAL_WIDTH / 2;
+  const bgHeights = generateHeightmap(
+    TERRAIN_TOTAL_WIDTH + backgroundMargin * 2,
+    0.25,
+    [],
+    0.73,
+  );
   const visualForegroundHeights = generateVisualForegroundHeightmap(
     TERRAIN_TOTAL_WIDTH,
     foregroundHeights,
@@ -676,6 +683,7 @@ export function createTerrainSystem(): TerrainSystem {
     container: new Container(),
     heights: bgHeights,
     parallaxFactor: 0.2,
+    xOffset: -backgroundMargin * PIXELS_PER_METER,
   };
   bgLayer.container.addChild(createTerrainGraphics(bgHeights, 0x1b2431, 0.62));
 

@@ -232,7 +232,7 @@ export default function GameOverlay({
             touchAction: 'none',
           }}
         >
-          {currentMission && (
+          {ctx.manualMissionInView && currentMission && (
             <InfoPanel
               key={currentMission.id}
               mission={currentMission}

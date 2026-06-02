@@ -256,7 +256,8 @@ export async function createGame(
   }
 
   function updateManualMissionInView() {
-    let visibleMission = actor.getSnapshot().context.currentMission;
+    const context = actor.getSnapshot().context;
+    let visibleMission: number | null = null;
     let closest = Infinity;
 
     for (let i = 0; i < missions.length; i++) {
@@ -273,7 +274,10 @@ export async function createGame(
       }
     }
 
-    if (visibleMission !== actor.getSnapshot().context.currentMission) {
+    if (
+      visibleMission !== context.currentMission ||
+      context.manualMissionInView !== (visibleMission != null)
+    ) {
       actor.send({ type: 'SET_MANUAL_MISSION', missionIndex: visibleMission });
     }
   }
@@ -936,7 +940,7 @@ export async function createGame(
     // parallax — background layers (pf<1) move slower than the camera.
     for (const layer of terrain.layers) {
       const pf = layer.parallaxFactor;
-      layer.container.x = camera.x * (1 - pf);
+      layer.container.x = (layer.xOffset ?? 0) + camera.x * (1 - pf);
     }
 
     starContainer.x = -camera.x * 0.02;
