@@ -1,4 +1,4 @@
-import { KONAMI_CODE } from './constants';
+import { KONAMI_CODE } from "./constants";
 
 export interface InputState {
   left: number;
@@ -14,8 +14,8 @@ export class InputManager {
   private onEscape: (() => void) | null = null;
 
   constructor() {
-    window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('keyup', this.handleKeyUp);
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
   }
 
   setKonamiCallback(cb: () => void) {
@@ -31,7 +31,7 @@ export class InputManager {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
-    if (e.code === 'Escape') {
+    if (e.code === "Escape") {
       this.onEscape?.();
       return;
     }
@@ -49,16 +49,14 @@ export class InputManager {
   private mapKey(code: string, pressed: boolean) {
     const value = pressed ? 1 : 0;
     switch (code) {
-      case 'ArrowLeft':
-      case 'KeyA':
+      case "ArrowLeft":
         this.state.left = value;
         break;
-      case 'ArrowRight':
-      case 'KeyD':
+      case "ArrowRight":
         this.state.right = value;
         break;
-      case 'ArrowUp':
-      case 'KeyW':
+      case "ArrowUp":
+      case "KeyA":
         this.state.up = value;
         break;
     }
@@ -78,7 +76,7 @@ export class InputManager {
     }
   }
 
-  setTouch(direction: 'left' | 'right' | 'up', pressed: boolean) {
+  setTouch(direction: "left" | "right" | "up", pressed: boolean) {
     this.state[direction] = pressed ? 1 : 0;
     if (pressed) this.onAnyControl?.();
   }
@@ -93,7 +91,7 @@ export class InputManager {
   }
 
   destroy() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('keyup', this.handleKeyUp);
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
   }
 }

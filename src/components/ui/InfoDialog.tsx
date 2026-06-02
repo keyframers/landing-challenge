@@ -22,22 +22,18 @@ export default function InfoDialog({ onClose }: InfoDialogProps) {
 
   return (
     <div className={styles.overlay} onClick={onClose}>
-      <div
-        ref={ref}
-        onClick={(e) => e.stopPropagation()}
-        className={styles.content}
-      >
+      <div ref={ref} onClick={(e) => e.stopPropagation()} className={styles.content}>
         <h2 className={styles.title}>Controls</h2>
         <div className={styles.controlsList}>
-          <ControlRow keys="← / A" desc="Rotate left" />
-          <ControlRow keys="→ / D" desc="Rotate right" />
-          <ControlRow keys="↑ / W" desc="Main thrust" />
-          <ControlRow keys="Esc" desc="Pause" />
+          <ControlRow keys="←" desc="Rotate left" />
+          <ControlRow keys="→" desc="Rotate right" />
+          <ControlRow keys="↑ / A" desc="Main thrust" />
+          <ControlRow keys="Esc / Enter" desc="Pause" />
         </div>
         <p className={styles.description}>
-          Land the lunar module on the highlighted landing zone. Control your
-          descent speed and angle — too fast or too tilted and you'll crash.
-          Each mission takes you to a new Apollo landing site.
+          Land the lunar module on the highlighted landing zone. Control your descent speed and
+          angle — too fast or too tilted and you'll crash. Each mission takes you to a new Apollo
+          landing site.
         </p>
         <Button onClick={onClose} className={styles.closeButton}>
           Got it
