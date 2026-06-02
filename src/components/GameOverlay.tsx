@@ -2,13 +2,13 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Actor } from "xstate";
 import type { gameMachine } from "../machines/gameMachine";
 import { missions } from "../data/missions";
-import { TitleScreen } from "./ui/TitleScreen";
-import { HUD } from "./ui/HUD";
-import { InfoPanel } from "./ui/InfoPanel";
-import { CrashOverlay } from "./ui/CrashOverlay";
-import { PauseOverlay } from "./ui/PauseOverlay";
-import { InfoDialog } from "./ui/InfoDialog";
-import { LoadingScreen } from "./ui/LoadingScreen";
+import TitleScreen from "./ui/TitleScreen";
+import HUD from "./ui/HUD";
+import InfoPanel from "./ui/InfoPanel";
+import CrashOverlay from "./ui/CrashOverlay";
+import PauseOverlay from "./ui/PauseOverlay";
+import InfoDialog from "./ui/InfoDialog";
+import LoadingScreen from "./ui/LoadingScreen";
 
 interface GameOverlayProps {
   actor: Actor<typeof gameMachine>;
@@ -25,7 +25,10 @@ function useActorState(actor: Actor<typeof gameMachine>) {
   );
 }
 
-export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
+export default function GameOverlay({
+  actor,
+  loadingProgress,
+}: GameOverlayProps) {
   const state = useActorState(actor);
   const ctx = state.context;
   const touchXRef = useRef<number | null>(null);
@@ -125,9 +128,7 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
           {state.matches({ playing: "paused" }) && (
             <PauseOverlay
               onResume={() => actor.send({ type: "RESUME" })}
-              onExploreMissions={() =>
-                actor.send({ type: "EXPLORE_MISSIONS" })
-              }
+              onExploreMissions={() => actor.send({ type: "EXPLORE_MISSIONS" })}
             />
           )}
 

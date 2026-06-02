@@ -6,7 +6,7 @@ interface InfoDialogProps {
   onClose: () => void;
 }
 
-export function InfoDialog({ onClose }: InfoDialogProps) {
+export default function InfoDialog({ onClose }: InfoDialogProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

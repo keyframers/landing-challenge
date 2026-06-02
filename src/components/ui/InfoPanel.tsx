@@ -3,6 +3,8 @@ import gsap from "gsap";
 import type { MissionData } from "../../data/missions";
 import styles from "./InfoPanel.module.css";
 import SplitText from "gsap/SplitText";
+import InfoPanelLabel from "./InfoPanelLabel";
+import Button from "./Button";
 
 interface InfoPanelProps {
   mission: MissionData;
@@ -14,7 +16,7 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP, SplitText);
 
-export function InfoPanel({
+export default function InfoPanel({
   mission,
   onContinue,
   onDriveRover,
@@ -33,7 +35,8 @@ export function InfoPanel({
         `.${styles.panelBackground}`,
         {
           transformOrigin: "top center",
-          scaleY: 0,
+          y: "-100%",
+          skewY: -20,
           duration: 2,
           ease: "power4.out",
         },
@@ -44,7 +47,8 @@ export function InfoPanel({
         `.${styles.titleLine}`,
         {
           transformOrigin: "center right",
-          scaleX: 0,
+          x: "100%",
+          skewX: -20,
           duration: 2,
           ease: "power3.out",
           stagger: 0.5,
@@ -84,7 +88,7 @@ export function InfoPanel({
       <div className={styles.date}>{mission.date}</div>
       <p className={styles.description}>{mission.description}</p>
 
-      <div className={styles.crewLabel}>Crew</div>
+      <InfoPanelLabel>Crew</InfoPanelLabel>
       <div className={styles.crew}>{mission.crew.join(" · ")}</div>
 
       {/* Carousel */}
@@ -102,13 +106,13 @@ export function InfoPanel({
 
       <div className={styles.buttonGroup}>
         {showRoverButton && (
-          <button onClick={onDriveRover} className={styles.roverButton}>
+          <Button onClick={onDriveRover} className={styles.roverButton}>
             Drive Rover
-          </button>
+          </Button>
         )}
-        <button onClick={onContinue} className={styles.continueButton}>
+        <Button onClick={onContinue} className={styles.continueButton}>
           Continue →
-        </button>
+        </Button>
       </div>
     </div>
   );

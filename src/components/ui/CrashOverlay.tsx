@@ -8,7 +8,11 @@ interface CrashOverlayProps {
   onSimulate: () => void;
 }
 
-export function CrashOverlay({ type, onRetry, onSimulate }: CrashOverlayProps) {
+export default function CrashOverlay({
+  type,
+  onRetry,
+  onSimulate,
+}: CrashOverlayProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

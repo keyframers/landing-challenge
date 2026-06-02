@@ -5,7 +5,7 @@ interface PauseOverlayProps {
   onExploreMissions: () => void;
 }
 
-export function PauseOverlay({
+export default function PauseOverlay({
   onResume,
   onExploreMissions,
 }: PauseOverlayProps) {

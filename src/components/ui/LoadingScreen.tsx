@@ -4,7 +4,7 @@ interface LoadingScreenProps {
   progress: number;
 }
 
-export function LoadingScreen({ progress }: LoadingScreenProps) {
+export default function LoadingScreen({ progress }: LoadingScreenProps) {
   return (
     <div className={styles.container}>
       <div className={styles.label}>Initializing Systems</div>
