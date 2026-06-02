@@ -81,7 +81,12 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
   }
 
   return (
-    <div>
+    <div
+      onWheel={(event) => {
+        event.preventDefault();
+        actor.send({ type: "EXPLORE_MISSIONS" });
+      }}
+    >
       {state.matches("title") && (
         <TitleScreen
           onLaunch={() => actor.send({ type: "LAUNCH" })}
