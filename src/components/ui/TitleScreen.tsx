@@ -35,7 +35,7 @@ export default function TitleScreen({
       const tl = gsap.timeline();
       tlRef.current = tl;
 
-      tl.set(`.${styles.buttonGroup} button`, { opacity: 0 });
+      tl.set(`.${styles.buttonGroup} button`, { opacity: 0, y: 20 });
 
       tl.addLabel("title-start");
 
@@ -133,11 +133,8 @@ clamp:false
         "title-end-=1"
       );
 
-      tl.fromTo(
+      tl.to(
         `.${styles.buttonGroup} button`,
-        {
-          y: 20,
-        },
         {
           y: 0,
           duration: 1.5,
@@ -165,11 +162,9 @@ clamp:false
         <Button onClick={onLaunch} large>
           Launch
         </Button>
-        <div className={styles.secondaryButtonGroup}>
-          <Button onClick={onExploreMissions} subtle>
-            Explore
-          </Button>
-        </div>
+        <Button onClick={onExploreMissions} subtle>
+          Explore
+        </Button>
       </div>
     </div>
   );
