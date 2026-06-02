@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import SplitText from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import classNames from "classnames";
 import styles from "./HUD.module.css";
 import { tuning } from "../../game/tuning";
 import Button from "./Button";
+
+gsap.registerPlugin(SplitText);
 
 interface HUDProps {
   fuel: number;
@@ -99,9 +102,37 @@ export default function HUD({
       </div>
 
       {/* Bottom - status */}
-      <div className={styles.statusBar}>
-        <div className={styles.statusLabel}>Status</div>
-        <div className={styles.statusValue}>{status}</div>
+      <HUDStatus key={status} status={status} />
+    </div>
+  );
+}
+
+function HUDStatus({ status }: { status: string }) {
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (!statusRef.current) return;
+      const splitText = new SplitText(statusRef.current, { type: "chars" });
+      gsap.from(splitText.chars, {
+        y: 10,
+        opacity: 0,
+        duration: 0.3,
+        stagger: {
+          from: "edges",
+          amount: 0.3,
+        },
+        ease: "power2.out",
+      });
+    },
+    { scope: statusRef, dependencies: [status] }
+  );
+
+  return (
+    <div className={styles.statusBar}>
+      <div className={styles.statusLabel}>Status</div>
+      <div ref={statusRef} className={styles.statusValue}>
+        {status}
       </div>
     </div>
   );
