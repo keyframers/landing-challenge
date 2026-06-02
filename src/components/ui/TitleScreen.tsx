@@ -7,7 +7,7 @@ import styles from "./TitleScreen.module.css";
 import { CustomEase } from "gsap/CustomEase";
 import PhysicsPropsPlugin from "gsap/PhysicsPropsPlugin";
 import Physics2DPlugin from "gsap/Physics2DPlugin";
-import { Button } from "./Button";
+import Button from "./Button";
 import { RoughEase } from "gsap/EasePack";
 
 gsap.registerPlugin(
@@ -25,7 +25,11 @@ interface TitleScreenProps {
   onInfo: () => void;
 }
 
-export function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
+export default function TitleScreen({
+  onLaunch,
+  onBrowse,
+  onInfo,
+}: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tlRef = useRef<gsap.core.Timeline | null>(null);
@@ -34,13 +38,12 @@ export function TitleScreen({ onLaunch, onBrowse, onInfo }: TitleScreenProps) {
     () => {
       if (!containerRef.current) return;
 
-      let title = SplitText.create(`.${styles.title}`, { type: "chars" });
-
       const tl = gsap.timeline();
       tlRef.current = tl;
 
       tl.addLabel("title-start");
 
+      let title = SplitText.create(`.${styles.title}`, { type: "chars" });
       tl.from(
         title.chars,
         {

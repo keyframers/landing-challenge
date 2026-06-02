@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import type { MissionData } from "../../data/missions";
-import styles from "./InfoPanel.module.css";
+import { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import type { MissionData } from '../../data/missions';
+import styles from './InfoPanel.module.css';
+import SplitText from 'gsap/SplitText';
+import InfoPanelLabel from './InfoPanelLabel';
+import Button from './Button';
 
 interface InfoPanelProps {
   mission: MissionData;
@@ -10,9 +13,11 @@ interface InfoPanelProps {
   onDriveRover?: () => void;
   showRoverButton: boolean;
 }
-import { useGSAP } from "@gsap/react";
+import { useGSAP } from '@gsap/react';
 
-export function InfoPanel({
+gsap.registerPlugin(useGSAP, SplitText);
+
+export default function InfoPanel({
   mission,
   onContinue,
   onExploreMissions,
@@ -26,20 +31,48 @@ export function InfoPanel({
     () => {
       if (!panelRef.current) return;
 
-      gsap.from(`.${styles.panelBackground}`, {
-        transformOrigin: "top center",
-        scaleY: 0,
-        duration: 2,
-        ease: "expo.out",
-      });
+      const tl = gsap.timeline();
 
-      gsap.from(`.${styles.titleLine}`, {
-        transformOrigin: "center left",
-        scaleX: 0,
-        duration: 2,
-        ease: "expo.out",
-        stagger: 0.5,
+      tl.from(
+        `.${styles.panelBackground}`,
+        {
+          transformOrigin: 'top center',
+          y: '-100%',
+          skewY: -20,
+          duration: 2,
+          ease: 'power4.out',
+        },
+        0,
+      );
+
+      tl.from(
+        `.${styles.titleLine}`,
+        {
+          transformOrigin: 'center right',
+          x: '100%',
+          skewX: -20,
+          duration: 2,
+          ease: 'power3.out',
+          stagger: 0.5,
+        },
+        0,
+      );
+
+      let titleText = SplitText.create(`.${styles.titleText}`, {
+        type: 'chars',
       });
+      tl.from(
+        titleText.chars,
+        {
+          // x: -80,
+          // autoAlpha: 0,
+          y: '100%',
+          transformOrigin: 'bottom center',
+          ease: 'expo.out',
+          stagger: -0.05,
+        },
+        '-=1.75',
+      );
     },
     { scope: panelRef },
   );
@@ -57,8 +90,8 @@ export function InfoPanel({
       <div className={styles.date}>{mission.date}</div>
       <p className={styles.description}>{mission.description}</p>
 
-      <div className={styles.crewLabel}>Crew</div>
-      <div className={styles.crew}>{mission.crew.join(" · ")}</div>
+      <InfoPanelLabel>Crew</InfoPanelLabel>
+      <div className={styles.crew}>{mission.crew.join(' · ')}</div>
 
       {/* Carousel */}
       <div className={styles.carousel}>
@@ -73,29 +106,20 @@ export function InfoPanel({
         ))}
       </div>
 
-      <div className={styles.dots}>
-        {mission.images.map((_, i) => (
-          <div
-            key={i}
-            className={`${styles.dot} ${i === carouselIndex ? styles.active : styles.inactive}`}
-          />
-        ))}
-      </div>
-
       <div className={styles.buttonGroup}>
         {showRoverButton && (
-          <button onClick={onDriveRover} className={styles.roverButton}>
+          <Button onClick={onDriveRover} className={styles.roverButton}>
             Drive Rover
-          </button>
+          </Button>
         )}
         {onExploreMissions && (
-          <button onClick={onExploreMissions} className={styles.roverButton}>
+          <Button onClick={onExploreMissions} className={styles.roverButton}>
             Explore
-          </button>
+          </Button>
         )}
-        <button onClick={onContinue} className={styles.continueButton}>
+        <Button onClick={onContinue} className={styles.continueButton}>
           Continue →
-        </button>
+        </Button>
       </div>
     </div>
   );

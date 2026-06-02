@@ -4,7 +4,7 @@ import SplitText from "gsap/SplitText";
 import classNames from "classnames";
 
 import { useGSAP } from "@gsap/react";
-import styles from "./Button.module.css";
+import styles from "./InfoPanelLabel.module.css";
 import { CustomEase } from "gsap/CustomEase";
 import PhysicsPropsPlugin from "gsap/PhysicsPropsPlugin";
 import Physics2DPlugin from "gsap/Physics2DPlugin";
@@ -17,18 +17,13 @@ gsap.registerPlugin(
   Physics2DPlugin,
 );
 
-type ButtonProps = HTMLAttributes<HTMLButtonElement> & {
-  large?: boolean;
-  subtle?: boolean;
-};
+type LabelProps = HTMLAttributes<HTMLDivElement>;
 
-export default function Button({
+export default function InfoPanelLabel({
   className,
-  large,
-  subtle,
   children,
   ...props
-}: ButtonProps) {
+}: LabelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -39,13 +34,10 @@ export default function Button({
   );
 
   return (
-    <button
-      className={classNames(styles.root, className)}
-      data-large={large}
-      data-subtle={subtle}
-      {...props}
-    >
-      {children}
-    </button>
+    <div className={classNames(styles.root, className)} {...props}>
+      <span className={styles.slash}>/</span>
+      <span className={styles.slash}>/</span>
+      <span className={styles.text}>{children}</span>
+    </div>
   );
 }

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Leva, useControls } from 'leva';
 import { createGame, type Game } from '../game/engine';
 import { tuning } from '../game/tuning';
-import { GameOverlay } from './GameOverlay';
-import { LoadingScreen } from './ui/LoadingScreen';
+import GameOverlay from './GameOverlay';
+import LoadingScreen from './ui/LoadingScreen';
 
 export function GameApp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,27 +12,97 @@ export function GameApp() {
   const [game, setGame] = useState<Game | null>(null);
   const values = useControls('Physics', {
     gravity: { value: tuning.gravity, min: 0, max: 8, step: 0.01 },
-    mainEngineForce: { value: tuning.mainEngineForce, min: 0, max: 100000, step: 100 },
-    sideEngineTorque: { value: tuning.sideEngineTorque, min: 0, max: 100000, step: 100 },
+    mainEngineForce: {
+      value: tuning.mainEngineForce,
+      min: 0,
+      max: 100000,
+      step: 100,
+    },
+    sideEngineTorque: {
+      value: tuning.sideEngineTorque,
+      min: 0,
+      max: 100000,
+      step: 100,
+    },
     fuelBurnMain: { value: tuning.fuelBurnMain, min: 0, max: 10, step: 0.1 },
     fuelBurnSide: { value: tuning.fuelBurnSide, min: 0, max: 10, step: 0.1 },
     startAltitude: { value: tuning.startAltitude, min: 20, max: 400, step: 1 },
-    maxLandingSpeed: { value: tuning.maxLandingSpeed, min: 0.5, max: 10, step: 0.1 },
-    maxLandingAngle: { value: tuning.maxLandingAngle, min: 0, max: Math.PI / 2, step: 0.01 },
+    maxLandingSpeed: {
+      value: tuning.maxLandingSpeed,
+      min: 0.5,
+      max: 10,
+      step: 0.1,
+    },
+    maxLandingAngle: {
+      value: tuning.maxLandingAngle,
+      min: 0,
+      max: Math.PI / 2,
+      step: 0.01,
+    },
     roverAccel: { value: tuning.roverAccel, min: 0, max: 800, step: 10 },
     roverMaxSpeed: { value: tuning.roverMaxSpeed, min: 1, max: 70, step: 1 },
     roverAirTorque: { value: tuning.roverAirTorque, min: 0, max: 400, step: 1 },
     roverDownforce: { value: tuning.roverDownforce, min: 0, max: 400, step: 5 },
-    roverBoostForce: { value: tuning.roverBoostForce, min: 0, max: 1200, step: 10 },
-    roverWheelSpinSpeed: { value: tuning.roverWheelSpinSpeed, min: 0, max: 50, step: 1 },
-    roverSuspensionLength: { value: tuning.roverSuspensionLength, min: 0.3, max: 3, step: 0.1 },
-    roverSuspensionSpring: { value: tuning.roverSuspensionSpring, min: 100, max: 3000, step: 50 },
-    roverSuspensionDamping: { value: tuning.roverSuspensionDamping, min: 0, max: 400, step: 10 },
-    roverSuspensionMaxForce: { value: tuning.roverSuspensionMaxForce, min: 100, max: 3000, step: 50 },
-    starterLaunchForce: { value: tuning.starterLaunchForce, min: 1000, max: 160000, step: 1000 },
-    starterEngineBurnSeconds: { value: tuning.starterEngineBurnSeconds, min: 0.1, max: 4, step: 0.05 },
-    starterLaunchAngle: { value: tuning.starterLaunchAngle, min: -Math.PI / 4, max: Math.PI / 4, step: 0.01 },
-    foregroundJaggedness: { value: tuning.foregroundJaggedness, min: 0, max: 3, step: 0.05 },
+    roverBoostForce: {
+      value: tuning.roverBoostForce,
+      min: 0,
+      max: 1200,
+      step: 10,
+    },
+    roverWheelSpinSpeed: {
+      value: tuning.roverWheelSpinSpeed,
+      min: 0,
+      max: 50,
+      step: 1,
+    },
+    roverSuspensionLength: {
+      value: tuning.roverSuspensionLength,
+      min: 0.3,
+      max: 3,
+      step: 0.1,
+    },
+    roverSuspensionSpring: {
+      value: tuning.roverSuspensionSpring,
+      min: 100,
+      max: 3000,
+      step: 50,
+    },
+    roverSuspensionDamping: {
+      value: tuning.roverSuspensionDamping,
+      min: 0,
+      max: 400,
+      step: 10,
+    },
+    roverSuspensionMaxForce: {
+      value: tuning.roverSuspensionMaxForce,
+      min: 100,
+      max: 3000,
+      step: 50,
+    },
+    starterLaunchForce: {
+      value: tuning.starterLaunchForce,
+      min: 1000,
+      max: 160000,
+      step: 1000,
+    },
+    starterEngineBurnSeconds: {
+      value: tuning.starterEngineBurnSeconds,
+      min: 0.1,
+      max: 4,
+      step: 0.05,
+    },
+    starterLaunchAngle: {
+      value: tuning.starterLaunchAngle,
+      min: -Math.PI / 4,
+      max: Math.PI / 4,
+      step: 0.01,
+    },
+    foregroundJaggedness: {
+      value: tuning.foregroundJaggedness,
+      min: 0,
+      max: 3,
+      step: 0.05,
+    },
     wireframe: { value: tuning.wireframe },
     showDebugBounds: { value: tuning.showDebugBounds },
   });

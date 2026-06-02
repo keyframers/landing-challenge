@@ -13,7 +13,7 @@ interface HUDProps {
   onMissionSelect?: (missionIndex: number) => void;
 }
 
-export function HUD({
+export default function HUD({
   fuel,
   speed,
   altitude,

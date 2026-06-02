@@ -1,14 +1,14 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import type { Actor } from "xstate";
-import type { gameMachine } from "../machines/gameMachine";
-import { missions } from "../data/missions";
-import { TitleScreen } from "./ui/TitleScreen";
-import { HUD } from "./ui/HUD";
-import { InfoPanel } from "./ui/InfoPanel";
-import { CrashOverlay } from "./ui/CrashOverlay";
-import { PauseOverlay } from "./ui/PauseOverlay";
-import { InfoDialog } from "./ui/InfoDialog";
-import { LoadingScreen } from "./ui/LoadingScreen";
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import type { Actor } from 'xstate';
+import type { gameMachine } from '../machines/gameMachine';
+import { missions } from '../data/missions';
+import TitleScreen from './ui/TitleScreen';
+import HUD from './ui/HUD';
+import InfoPanel from './ui/InfoPanel';
+import CrashOverlay from './ui/CrashOverlay';
+import PauseOverlay from './ui/PauseOverlay';
+import InfoDialog from './ui/InfoDialog';
+import LoadingScreen from './ui/LoadingScreen';
 
 interface GameOverlayProps {
   actor: Actor<typeof gameMachine>;
@@ -25,7 +25,10 @@ function useActorState(actor: Actor<typeof gameMachine>) {
   );
 }
 
-export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
+export default function GameOverlay({
+  actor,
+  loadingProgress,
+}: GameOverlayProps) {
   const state = useActorState(actor);
   const ctx = state.context;
   const touchXRef = useRef<number | null>(null);
@@ -35,49 +38,49 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
   const speed = Math.sqrt(ctx.velocity.x ** 2 + ctx.velocity.y ** 2);
 
   function getStatusText(): string {
-    if (state.matches("loading")) return "Loading";
-    if (state.matches("title")) return "Ready";
-    if (state.matches({ playing: "descending" })) {
-      if (ctx.fuel <= 0) return "No Fuel";
-      if (speed > 1.5) return "Too Fast";
-      return "Descending";
+    if (state.matches('loading')) return 'Loading';
+    if (state.matches('title')) return 'Ready';
+    if (state.matches({ playing: 'descending' })) {
+      if (ctx.fuel <= 0) return 'No Fuel';
+      if (speed > 1.5) return 'Too Fast';
+      return 'Descending';
     }
-    if (state.matches({ playing: "landed" })) return "Landed";
-    if (state.matches({ playing: "simulatingLanding" })) return "Simulating";
-    if (state.matches({ playing: "rover" })) return "Rover Active";
-    if (state.matches({ playing: "crashed" })) return "Crashed";
-    if (state.matches({ playing: "missed" })) return "Off Target";
-    if (state.matches({ playing: "paused" })) return "Paused";
-    if (state.matches("manual")) return "Browse Mode";
-    return "";
+    if (state.matches({ playing: 'landed' })) return 'Landed';
+    if (state.matches({ playing: 'simulatingLanding' })) return 'Simulating';
+    if (state.matches({ playing: 'rover' })) return 'Rover Active';
+    if (state.matches({ playing: 'crashed' })) return 'Crashed';
+    if (state.matches({ playing: 'missed' })) return 'Off Target';
+    if (state.matches({ playing: 'paused' })) return 'Paused';
+    if (state.matches('manual')) return 'Browse Mode';
+    return '';
   }
 
   function sendBrowseDelta(delta: number) {
     actor.send({
-      type: "SCROLL",
+      type: 'SCROLL',
       position: Math.max(0, Math.min(1, ctx.browsePosition + delta / 2400)),
     });
   }
 
-  if (state.matches("loading")) {
+  if (state.matches('loading')) {
     return <LoadingScreen progress={loadingProgress} />;
   }
 
   return (
     <div>
-      {state.matches("title") && (
+      {state.matches('title') && (
         <TitleScreen
-          onLaunch={() => actor.send({ type: "LAUNCH" })}
-          onBrowse={() => actor.send({ type: "BROWSE" })}
-          onInfo={() => actor.send({ type: "INFO" })}
+          onLaunch={() => actor.send({ type: 'LAUNCH' })}
+          onBrowse={() => actor.send({ type: 'BROWSE' })}
+          onInfo={() => actor.send({ type: 'INFO' })}
         />
       )}
 
-      {state.matches("info") && (
-        <InfoDialog onClose={() => actor.send({ type: "CLOSE" })} />
+      {state.matches('info') && (
+        <InfoDialog onClose={() => actor.send({ type: 'CLOSE' })} />
       )}
 
-      {typeof state.value === "object" && "playing" in state.value && (
+      {typeof state.value === 'object' && 'playing' in state.value && (
         <>
           <HUD
             fuel={ctx.fuel}
@@ -88,73 +91,69 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
             status={getStatusText()}
             missionNumber={ctx.currentMission + 1}
             totalMissions={missions.length}
-            onPause={() => actor.send({ type: "PAUSE" })}
+            onPause={() => actor.send({ type: 'PAUSE' })}
             onMissionSelect={(missionIndex) =>
-              actor.send({ type: "JUMP_TO_MISSION", missionIndex })
+              actor.send({ type: 'JUMP_TO_MISSION', missionIndex })
             }
           />
 
-          {state.matches({ playing: "landed" }) && currentMission && (
+          {state.matches({ playing: 'landed' }) && currentMission && (
             <InfoPanel
               mission={currentMission}
-              onContinue={() => actor.send({ type: "CONTINUE" })}
-              onExploreMissions={() =>
-                actor.send({ type: "EXPLORE_MISSIONS" })
-              }
-              onDriveRover={() => actor.send({ type: "DRIVE_ROVER" })}
+              onContinue={() => actor.send({ type: 'CONTINUE' })}
+              onExploreMissions={() => actor.send({ type: 'EXPLORE_MISSIONS' })}
+              onDriveRover={() => actor.send({ type: 'DRIVE_ROVER' })}
               showRoverButton={
                 currentMission.roverAvailable || ctx.roverUnlocked
               }
             />
           )}
 
-          {state.matches({ playing: "crashed" }) && (
+          {state.matches({ playing: 'crashed' }) && (
             <CrashOverlay
               type="crashed"
-              onRetry={() => actor.send({ type: "RETRY" })}
-              onSimulate={() => actor.send({ type: "SIMULATE" })}
+              onRetry={() => actor.send({ type: 'RETRY' })}
+              onSimulate={() => actor.send({ type: 'SIMULATE' })}
             />
           )}
 
-          {state.matches({ playing: "missed" }) && (
+          {state.matches({ playing: 'missed' }) && (
             <CrashOverlay
               type="missed"
-              onRetry={() => actor.send({ type: "RETRY" })}
-              onSimulate={() => actor.send({ type: "SIMULATE" })}
+              onRetry={() => actor.send({ type: 'RETRY' })}
+              onSimulate={() => actor.send({ type: 'SIMULATE' })}
             />
           )}
 
-          {state.matches({ playing: "paused" }) && (
+          {state.matches({ playing: 'paused' }) && (
             <PauseOverlay
-              onResume={() => actor.send({ type: "RESUME" })}
-              onSimulate={() => actor.send({ type: "SIMULATE" })}
-              onExploreMissions={() =>
-                actor.send({ type: "EXPLORE_MISSIONS" })
-              }
+              onResume={() => actor.send({ type: 'RESUME' })}
+              onSimulate={() => actor.send({ type: 'SIMULATE' })}
+              onExploreMissions={() => actor.send({ type: 'EXPLORE_MISSIONS' })}
             />
           )}
 
-          {state.matches({ playing: "rover" }) && (
+          {state.matches({ playing: 'rover' }) && (
             <div
               style={{
-                position: "absolute",
-                bottom: "2rem",
-                right: "2rem",
-                pointerEvents: "auto",
+                position: 'absolute',
+                bottom: '2rem',
+                right: '2rem',
+                pointerEvents: 'auto',
               }}
             >
               <button
-                onClick={() => actor.send({ type: "RETURN_TO_LANDER" })}
+                onClick={() => actor.send({ type: 'RETURN_TO_LANDER' })}
                 style={{
-                  padding: "0.6rem 1.5rem",
-                  fontSize: "0.75rem",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  background: "rgba(10,10,20,0.8)",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  color: "#f4f4f5",
-                  cursor: "pointer",
-                  borderRadius: "2px",
+                  padding: '0.6rem 1.5rem',
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  background: 'rgba(10,10,20,0.8)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#f4f4f5',
+                  cursor: 'pointer',
+                  borderRadius: '2px',
                 }}
               >
                 Return to Lander
@@ -164,7 +163,7 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
         </>
       )}
 
-      {state.matches("manual") && (
+      {state.matches('manual') && (
         <div
           onWheel={(event) => {
             event.preventDefault();
@@ -192,35 +191,35 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
             sendBrowseDelta(dx + dy);
           }}
           style={{
-            position: "absolute",
+            position: 'absolute',
             inset: 0,
-            pointerEvents: "auto",
-            touchAction: "none",
+            pointerEvents: 'auto',
+            touchAction: 'none',
           }}
         >
           {currentMission && (
             <InfoPanel
               key={currentMission.id}
               mission={currentMission}
-              onContinue={() => actor.send({ type: "CONTROLS_PRESSED" })}
+              onContinue={() => actor.send({ type: 'CONTROLS_PRESSED' })}
               showRoverButton={false}
             />
           )}
           <button
-            onClick={() => actor.send({ type: "EXIT_MANUAL" })}
+            onClick={() => actor.send({ type: 'EXIT_MANUAL' })}
             style={{
-              position: "absolute",
-              right: "2rem",
-              bottom: "2rem",
-              padding: "0.5rem 1.5rem",
-              fontSize: "0.75rem",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "#aaa",
-              cursor: "pointer",
-              borderRadius: "2px",
+              position: 'absolute',
+              right: '2rem',
+              bottom: '2rem',
+              padding: '0.5rem 1.5rem',
+              fontSize: '0.75rem',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#aaa',
+              cursor: 'pointer',
+              borderRadius: '2px',
             }}
           >
             Back to Title
