@@ -1,4 +1,5 @@
 import styles from "./HUD.module.css";
+import Button from "./Button";
 
 interface HUDProps {
   fuel: number;
@@ -42,9 +43,9 @@ export default function HUD({
             onMissionSelect={onMissionSelect}
           />
         </div>
-        <button onClick={onPause} className={styles.pauseButton}>
+        <Button onClick={onPause} className={styles.pauseButton}>
           ⏸
-        </button>
+        </Button>
       </div>
 
       {/* Left panel - thrust gauge */}
@@ -140,7 +141,7 @@ function MissionProgress({
         if (i < current) dotClass = styles.completed;
         else if (i === current) dotClass = styles.current;
         return (
-          <button
+          <Button
             key={i}
             onClick={() => onMissionSelect?.(i)}
             className={`${styles.progressDot} ${dotClass} ${onMissionSelect ? styles.clickable : ""}`}

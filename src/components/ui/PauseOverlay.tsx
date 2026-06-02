@@ -1,4 +1,5 @@
 import styles from "./PauseOverlay.module.css";
+import Button from "./Button";
 
 interface PauseOverlayProps {
   onResume: () => void;
@@ -16,24 +17,24 @@ export default function PauseOverlay({
       <div className={styles.content}>
         <div className={styles.title}>Paused</div>
         <div className={styles.buttonGroup}>
-          <button
+          <Button
             onClick={onResume}
             className={`${styles.button} ${styles.primaryButton}`}
           >
             Resume
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onSimulate}
             className={`${styles.button} ${styles.secondaryButton}`}
           >
             Simulate Landing
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={onExploreMissions}
             className={`${styles.button} ${styles.secondaryButton}`}
           >
             Explore Missions
-          </button>
+          </Button>
         </div>
       </div>
     </div>
