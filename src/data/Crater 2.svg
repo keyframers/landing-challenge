@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5" viewBox="0 0 249 83">
+  <path d="M0 0h248.078v82.148H0z" style="fill:none"/>
+  <path d="M15.255 71.65c10.052-8.219 19.174-18.444 22.283-41.639l17.88-17.88 137.402 2 13.88 15.88c2.875 15.328 8.803 29.905 26.301 41.639" style="fill:#ccc"/>
+  <clipPath id="a">
+    <path d="M15.255 71.65c10.052-8.219 19.174-18.444 22.283-41.639l17.88-17.88 137.402 2 13.88 15.88c2.875 15.328 8.803 29.905 26.301 41.639"/>
+  </clipPath>
+  <g clip-path="url(#a)">
+    <path d="M13.559 17.874 8.255 35.876l173.39 6.331 10.795 18.875 1.395 26.641 44.107-1.363-8.427-31.248L210.736.06 26.079 2.718z" style="fill:#ebebeb"/>
+  </g>
+  <path d="M15.255 71.65c10.052-8.219 19.174-18.444 22.283-41.639l17.88-17.88 137.402 2 13.88 15.88c2.875 15.328 8.803 29.905 26.301 41.639" style="fill:none;stroke:#989898;stroke-width:8.33px"/>
+  <path d="m185.888 32.344-.197 8.654-4.425 4.229-117.689-2.675-4.229-4.425.197-8.654 4.425-4.229 117.689 2.675z" style="fill:#b1b1b1;stroke:#989898;stroke-width:8.39px"/>
+</svg>
