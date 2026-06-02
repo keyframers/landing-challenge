@@ -58,7 +58,7 @@
   background: var(--accent);
   position: absolute;
   right: 0;
-  transformorigin: center right;
+  transform-origin: center right;
 }
 
 .titleLine + .titleLine {

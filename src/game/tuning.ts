@@ -18,8 +18,8 @@ export const tuning = {
   gravity: MOON_GRAVITY,
   mainEngineForce: 45000,
   sideEngineTorque: 42000,
-  fuelBurnMain: 8,
-  fuelBurnSide: 2,
+  fuelBurnMain: 4.75,
+  fuelBurnSide: 1.15,
 
   // Mission / landing
   startAltitude: 150,

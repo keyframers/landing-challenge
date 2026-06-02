@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import styles from "./HUD.module.css";
+import { tuning } from "../../game/tuning";
 
 interface HUDProps {
   fuel: number;
@@ -28,6 +29,7 @@ export default function HUD({
   onMissionSelect,
 }: HUDProps) {
   const angleDeg = Math.abs((angle * 180) / Math.PI) % 360;
+  const landingAngleDeg = Math.min(angleDeg, 360 - angleDeg);
 
   return (
     <div className={styles.container}>
@@ -67,12 +69,12 @@ export default function HUD({
         <TelemetryItem
           label="Speed"
           value={`${speed.toFixed(1)} m/s`}
-          warn={speed > 1.5}
+          warn={speed > tuning.maxLandingSpeed}
         />
         <TelemetryItem
           label="Angle"
           value={`${angleDeg.toFixed(0)}°`}
-          warn={angleDeg > 10 && angleDeg < 350}
+          warn={landingAngleDeg > (tuning.maxLandingAngle * 180) / Math.PI}
         />
       </div>
 

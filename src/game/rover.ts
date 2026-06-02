@@ -12,6 +12,7 @@ import type { InputState } from './input';
 
 export const ROVER_WHEEL_OFFSETS = [-0.95, 0.95];
 const WIREFRAME_COLOR = 0xffffff;
+const ROVER_SVG_ASPECT = 600 / 347;
 const WHEEL_MOUNT_Y = ROVER_HEIGHT * 0.2;
 const DRIVE_FORCE_SPLIT = 1 / ROVER_WHEEL_OFFSETS.length;
 let roverTexture: Texture | null = null;
@@ -46,8 +47,8 @@ export function drawRoverGraphics(container: Container) {
   const hh = (ROVER_HEIGHT / 2) * ppm;
   const sprite = new Sprite(roverTexture ?? Texture.WHITE);
   sprite.anchor.set(0.5);
-  sprite.width = hw * 2;
   sprite.height = hh * 2;
+  sprite.width = sprite.height * ROVER_SVG_ASPECT;
   sprite.label = 'roverSprite';
   container.addChild(sprite);
 

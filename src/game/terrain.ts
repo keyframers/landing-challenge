@@ -1,4 +1,12 @@
-import { Graphics, Container } from 'pixi.js';
+import {
+  Graphics,
+  Container,
+  Mesh,
+  MeshGeometry,
+  Text,
+  Texture,
+} from 'pixi.js';
+import gsap from 'gsap';
 import { createNoise2D } from 'simplex-noise';
 import {
   TERRAIN_TOTAL_WIDTH,
@@ -11,12 +19,12 @@ import { missions } from '../data/missions';
 import { tuning } from './tuning';
 
 const WIREFRAME_COLOR = 0xffffff;
-const LUNAR_TOP = 0xd8dce2;
-const LUNAR_MID = 0xaeb6c1;
-const LUNAR_LOW = 0x6f7987;
-const LUNAR_SHADOW = 0x323b48;
-const ROCK_LIGHT = 0xc9cdd3;
-const ROCK_DARK = 0x596372;
+const FOREGROUND_TOP = 0xcdcdd2;
+const FOREGROUND_BOTTOM = 0x343946;
+const VISUAL_FOREGROUND_FILL = 0x4c5260;
+let foregroundGradientTexture: Texture | null = null;
+
+type TerrainRenderMode = 'flat' | 'mainGradient' | 'foregroundDark';
 
 export interface TerrainLayer {
   container: Container;
@@ -44,7 +52,9 @@ export function generateHeightmap(
   landingZones: LandingZone[],
   seed?: number,
 ): number[] {
-  const noise2D = createNoise2D(seed != null ? seededRandom(seed * 2147483647) : undefined);
+  const noise2D = createNoise2D(
+    seed != null ? seededRandom(seed * 2147483647) : undefined,
+  );
   const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
   const heights: number[] = [];
 
@@ -63,7 +73,8 @@ export function generateHeightmap(
   for (const zone of landingZones) {
     const startIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
     const endIdx = Math.ceil((zone.x + zone.width) / TERRAIN_SEGMENT_SIZE);
-    const zoneHeight = heights[Math.floor((startIdx + endIdx) / 2)] ?? TERRAIN_BASE_HEIGHT;
+    const zoneHeight =
+      heights[Math.floor((startIdx + endIdx) / 2)] ?? TERRAIN_BASE_HEIGHT;
 
     for (let i = startIdx; i <= endIdx && i < heights.length; i++) {
       heights[i] = zoneHeight;
@@ -75,12 +86,10 @@ export function generateHeightmap(
       const leftIdx = startIdx - b;
       const rightIdx = endIdx + b;
       if (leftIdx >= 0) {
-        heights[leftIdx] =
-          heights[leftIdx] * t + zoneHeight * (1 - t);
+        heights[leftIdx] = heights[leftIdx] * t + zoneHeight * (1 - t);
       }
       if (rightIdx < heights.length) {
-        heights[rightIdx] =
-          heights[rightIdx] * t + zoneHeight * (1 - t);
+        heights[rightIdx] = heights[rightIdx] * t + zoneHeight * (1 - t);
       }
     }
   }
@@ -111,7 +120,8 @@ function smoothHeights(heights: number[], passes = 2) {
   for (let pass = 0; pass < passes; pass++) {
     const next = heights.slice();
     for (let i = 1; i < heights.length - 1; i++) {
-      next[i] = heights[i - 1] * 0.25 + heights[i] * 0.5 + heights[i + 1] * 0.25;
+      next[i] =
+        heights[i - 1] * 0.25 + heights[i] * 0.5 + heights[i + 1] * 0.25;
     }
     heights.splice(0, heights.length, ...next);
   }
@@ -256,7 +266,11 @@ export function generateJaggedHeightmap(
     const startIdx = Math.floor((zone.x - 12) / TERRAIN_SEGMENT_SIZE);
     const endIdx = Math.ceil((zone.x + zone.width + 12) / TERRAIN_SEGMENT_SIZE);
     const padY = getTerrainHeightAt(foregroundHeights, zone.x + zone.width / 2);
-    for (let i = Math.max(0, startIdx); i <= endIdx && i < heights.length; i++) {
+    for (
+      let i = Math.max(0, startIdx);
+      i <= endIdx && i < heights.length;
+      i++
+    ) {
       heights[i] = Math.max(heights[i], padY + 18);
     }
   }
@@ -274,16 +288,13 @@ export function generateVisualForegroundHeightmap(
 ): number[] {
   const random = seededRandom(seed * 2147483647);
   const numPoints = Math.ceil(totalWidth / TERRAIN_SEGMENT_SIZE) + 1;
-  const amount = Math.max(0, jaggedness);
-  const controlStep = Math.max(4, 26 - amount * 12);
+  const amount = Math.max(0, jaggedness) * 0.35;
+  const controlStep = 58;
   const controls: number[] = [];
 
   for (let x = 0; x <= totalWidth + controlStep; x += controlStep) {
     const mainY = getTerrainHeightAt(mainHeights, x);
-    const rockyPeak = random() > Math.max(0.28, 0.88 - amount * 0.18);
-    const low = 28 - amount * 8;
-    const high = 40 + amount * 52;
-    const offset = rockyPeak ? 12 + random() * 14 * amount : low + random() * high;
+    const offset = 34 + random() * (28 + amount * 18);
     controls.push(mainY + offset);
   }
 
@@ -292,16 +303,20 @@ export function generateVisualForegroundHeightmap(
     const x = i * TERRAIN_SEGMENT_SIZE;
     const ci = Math.floor(x / controlStep);
     const t = (x - ci * controlStep) / controlStep;
-    const eased = t < 0.5 ? t * 1.35 : 1 - (1 - t) * 0.7;
+    const eased = t * t * (3 - 2 * t);
     const y0 = controls[ci] ?? TERRAIN_BASE_HEIGHT;
     const y1 = controls[ci + 1] ?? y0;
     const jagged =
-      Math.sin(x * (0.45 + amount * 0.45)) * 3 * amount +
-      Math.sin(x * (0.13 + amount * 0.14)) * 5 * amount;
+      Math.sin(x * 0.08) * 1.5 * amount + Math.sin(x * 0.025) * 3 * amount;
     const mainY = getTerrainHeightAt(mainHeights, x);
-    heights.push(Math.max(y0 * (1 - eased) + y1 * eased + jagged, mainY + 12));
+    heights.push(Math.max(y0 * (1 - eased) + y1 * eased + jagged, mainY + 22));
   }
 
+  smoothHeights(heights, 2);
+  for (let i = 0; i < heights.length; i++) {
+    const x = i * TERRAIN_SEGMENT_SIZE;
+    heights[i] = Math.max(heights[i], getTerrainHeightAt(mainHeights, x) + 22);
+  }
   return heights;
 }
 
@@ -315,8 +330,9 @@ export function createTerrainGraphics(
   heights: number[],
   color: number,
   alpha: number,
-  textured = false,
-): Graphics {
+  mode: TerrainRenderMode = 'flat',
+): Container {
+  const container = new Container();
   const g = new Graphics();
   const ppm = PIXELS_PER_METER;
   const wireframe = tuning.wireframe;
@@ -338,23 +354,85 @@ export function createTerrainGraphics(
       g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
     }
     g.stroke({ color: WIREFRAME_COLOR, width: 2, alpha: 0.9 });
+    container.addChild(g);
   } else {
-    drawTerrainFill(color, alpha);
-    if (textured) {
-      drawTerrainFill(LUNAR_TOP, 0.38, TERRAIN_BASE_HEIGHT + 64);
-      drawTerrainFill(LUNAR_MID, 0.2, TERRAIN_BASE_HEIGHT + 120);
-      drawTerrainFill(LUNAR_SHADOW, 0.16);
+    if (mode === 'mainGradient') {
+      const mesh = createTerrainGradientMesh(heights, alpha);
+      container.addChild(mesh);
       drawSurfaceHighlights(g, heights);
-      drawProceduralRocks(g, heights);
+      container.addChild(g);
+    } else if (mode === 'foregroundDark') {
+      drawTerrainFill(VISUAL_FOREGROUND_FILL, alpha);
+      container.addChild(g);
+    } else {
+      drawTerrainFill(color, alpha);
+      container.addChild(g);
     }
   }
 
-  return g;
+  return container;
 }
 
-function terrainRandom(seed: number) {
-  const x = Math.sin(seed * 12.9898) * 43758.5453;
-  return x - Math.floor(x);
+function createForegroundGradientTexture() {
+  if (foregroundGradientTexture) return foregroundGradientTexture;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    foregroundGradientTexture = Texture.WHITE;
+    return foregroundGradientTexture;
+  }
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, '#CDCDD2');
+  gradient.addColorStop(1, '#343946');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  foregroundGradientTexture = Texture.from(canvas);
+  return foregroundGradientTexture;
+}
+
+function createTerrainGradientMesh(heights: number[], alpha: number) {
+  const ppm = PIXELS_PER_METER;
+  const dropY = 1000 * ppm;
+  const positions: number[] = [];
+  const uvs: number[] = [];
+  const indices: number[] = [];
+
+  for (let i = 0; i < heights.length; i++) {
+    const x = i * TERRAIN_SEGMENT_SIZE * ppm;
+    const topY = heights[i] * ppm;
+    positions.push(x, topY, x, dropY);
+    uvs.push(0, 0, 0, 1);
+  }
+
+  for (let i = 0; i < heights.length - 1; i++) {
+    const topLeft = i * 2;
+    const bottomLeft = topLeft + 1;
+    const topRight = topLeft + 2;
+    const bottomRight = topLeft + 3;
+    indices.push(
+      topLeft,
+      bottomLeft,
+      topRight,
+      topRight,
+      bottomLeft,
+      bottomRight,
+    );
+  }
+
+  const mesh = new Mesh({
+    geometry: new MeshGeometry({
+      positions: new Float32Array(positions),
+      uvs: new Float32Array(uvs),
+      indices: new Uint32Array(indices),
+    }),
+    texture: createForegroundGradientTexture(),
+  });
+  mesh.alpha = alpha;
+  return mesh;
 }
 
 function drawSurfaceHighlights(g: Graphics, heights: number[]) {
@@ -369,64 +447,97 @@ function drawSurfaceHighlights(g: Graphics, heights: number[]) {
   for (let i = 1; i < heights.length; i++) {
     g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, (heights[i] + 7) * ppm);
   }
-  g.stroke({ color: LUNAR_LOW, width: 4, alpha: 0.1 });
+  g.stroke({ color: FOREGROUND_BOTTOM, width: 4, alpha: 0.1 });
 }
 
-function drawProceduralRocks(g: Graphics, heights: number[]) {
+export function createLandingZoneMarker(zone: LandingZone): Container {
+  const marker = new Container();
   const ppm = PIXELS_PER_METER;
-  const step = 42;
-
-  for (let x = 24; x < TERRAIN_TOTAL_WIDTH - 24; x += step) {
-    const r = terrainRandom(x * 0.173);
-    if (r < 0.28) continue;
-
-    const baseY = getTerrainHeightAt(heights, x);
-    const width = (1.0 + terrainRandom(x * 0.41) * 2.6) * ppm;
-    const height = (0.5 + terrainRandom(x * 0.67) * 1.6) * ppm;
-    const px = x * ppm;
-    const py = baseY * ppm;
-    const lean = (terrainRandom(x * 0.91) - 0.5) * width * 0.45;
-
-    g.moveTo(px - width * 0.55, py);
-    g.lineTo(px + lean, py - height);
-    g.lineTo(px, py);
-    g.closePath();
-    g.fill({ color: ROCK_LIGHT, alpha: 0.58 });
-
-    g.moveTo(px, py);
-    g.lineTo(px + lean, py - height);
-    g.lineTo(px + width * 0.55, py);
-    g.closePath();
-    g.fill({ color: ROCK_DARK, alpha: 0.52 });
-
-    g.moveTo(px - width * 0.55, py + 1);
-    g.lineTo(px + width * 0.6, py + 1);
-    g.stroke({ color: LUNAR_SHADOW, width: 1.5, alpha: 0.18 });
-  }
-}
-
-export function createLandingZoneMarker(zone: LandingZone): Graphics {
-  const g = new Graphics();
-  const ppm = PIXELS_PER_METER;
-  const x = zone.x * ppm;
   const w = zone.width * ppm;
-  const color = tuning.wireframe ? WIREFRAME_COLOR : 0xffcc00;
+  const color = tuning.wireframe ? WIREFRAME_COLOR : 0xf4c56f;
 
-  g.rect(x, -4, w, 4);
-  if (tuning.wireframe) {
-    g.stroke({ color, width: 2, alpha: 0.9 });
-  } else {
-    g.fill({ color, alpha: 0.8 });
+  marker.x = zone.x * ppm;
+
+  const glow = new Graphics();
+  glow.roundRect(-w * 0.04, -5, w * 1.08, 10, 5);
+  glow.fill({ color, alpha: tuning.wireframe ? 0 : 0.42 });
+  glow.label = 'landingZoneGlow';
+  marker.addChild(glow);
+
+  if (!tuning.wireframe) {
+    gsap.to(glow, {
+      alpha: 0.78,
+      duration: 1.25,
+      ease: 'sine.inOut',
+      repeat: -1,
+      yoyo: true,
+    });
   }
 
-  g.rect(x, -4, 2, 8);
-  if (tuning.wireframe) g.stroke({ color, width: 2 });
-  else g.fill({ color });
-  g.rect(x + w - 2, -4, 2, 8);
-  if (tuning.wireframe) g.stroke({ color, width: 2 });
-  else g.fill({ color });
+  const pad = new Graphics();
+  pad.moveTo(0, 0).lineTo(w, 0);
+  pad.stroke({ color, width: tuning.wireframe ? 2 : 2.5, alpha: 0.95 });
+  marker.addChild(pad);
 
-  return g;
+  const posts = new Graphics();
+  posts.moveTo(0, -2).lineTo(0, -28);
+  posts.moveTo(w, -2).lineTo(w, -28);
+  posts.stroke({
+    color: tuning.wireframe ? color : 0xdfe4ec,
+    width: 1.5,
+    alpha: 0.85,
+  });
+  posts.circle(0, -30, 2.6).fill({ color, alpha: 0.95 });
+  posts.circle(w, -30, 2.6).fill({ color, alpha: 0.95 });
+  posts.label = 'landingZonePosts';
+  marker.addChild(posts);
+
+  // Text + arrow live in a single indicator group. The per-element GSAP tweens
+  // below animate each child's own alpha; the group's alpha is driven by lander
+  // proximity (see updateLandingZoneProximity) so multiplying down the tree
+  // fades the whole indicator out as the lander approaches.
+  const indicator = new Container();
+  indicator.label = 'lzIndicator';
+  marker.addChild(indicator);
+
+  const label = new Text({
+    text: 'LANDING ZONE',
+    style: {
+      fill: color,
+      fontFamily: 'monospace',
+      fontSize: 20,
+      letterSpacing: 2,
+    },
+  });
+  label.anchor.set(0.5);
+  label.x = w / 2;
+  label.y = -56;
+  indicator.addChild(label);
+
+  const chevron = new Graphics();
+  chevron.moveTo(w / 2 - 5, -42);
+  chevron.lineTo(w / 2, -34);
+  chevron.lineTo(w / 2 + 5, -42);
+  chevron.stroke({ color, width: 1.5, alpha: 0.95 });
+  indicator.addChild(chevron);
+
+  // Smooth text pulse between full and half opacity.
+  gsap.to(label, {
+    alpha: 0.5,
+    duration: 1.1,
+    ease: 'sine.inOut',
+    repeat: -1,
+    yoyo: true,
+  });
+
+  // Arrow drops down, fades out, then snaps back and repeats.
+  const arrow = gsap.timeline({ repeat: -1, repeatDelay: 0.25 });
+  arrow
+    .set(chevron, { y: 0, alpha: 0.95 })
+    .to(chevron, { y: 9, duration: 0.85, ease: 'sine.in' }, 0)
+    .to(chevron, { alpha: 0, duration: 0.4, ease: 'power2.in' }, 0.5);
+
+  return marker;
 }
 
 export interface TerrainSystem {
@@ -451,11 +562,16 @@ export function redrawTerrainSystem(terrain: TerrainSystem) {
   );
   mainLayer.container.removeChildren();
   mainLayer.container.addChild(
-    createTerrainGraphics(terrain.foregroundHeights, 0x9ba4b0, 1.0, true),
+    createTerrainGraphics(terrain.foregroundHeights, 0x9ba4b0, 1.0, 'mainGradient'),
   );
   visualFgLayer.container.removeChildren();
   visualFgLayer.container.addChild(
-    createTerrainGraphics(terrain.visualForegroundHeights, 0xbcc2ca, 1.0, true),
+    createTerrainGraphics(
+      terrain.visualForegroundHeights,
+      VISUAL_FOREGROUND_FILL,
+      1.0,
+      'foregroundDark',
+    ),
   );
 
   terrain.landingZoneMarkers.removeChildren();
@@ -467,6 +583,50 @@ export function redrawTerrainSystem(terrain: TerrainSystem) {
       PIXELS_PER_METER;
     marker.y = zoneY;
     terrain.landingZoneMarkers.addChild(marker);
+  }
+}
+
+// Distance (in meters) over which the indicator fades: fully visible at/beyond
+// FAR, nearly invisible at/within NEAR.
+const LZ_FADE_NEAR = 7;
+const LZ_FADE_FAR = 26;
+
+/**
+ * Fade each landing-zone indicator (text + arrow) toward ~0 as the lander
+ * approaches. Pass the lander position in meters, or null to restore full
+ * visibility (e.g. no active vehicle).
+ */
+export function updateLandingZoneProximity(
+  terrain: TerrainSystem,
+  currentMission: number,
+  landerX: number | null,
+  landerY: number | null,
+) {
+  const markers = terrain.landingZoneMarkers.children;
+  for (let i = 0; i < markers.length; i++) {
+    const marker = markers[i] as Container;
+    const zone = terrain.landingZones[i];
+    const active = zone.missionIndex === currentMission;
+    const glow = marker.getChildByLabel('landingZoneGlow');
+    const posts = marker.getChildByLabel('landingZonePosts');
+    const indicator = marker.getChildByLabel('lzIndicator');
+
+    if (glow) glow.visible = active;
+    if (posts) posts.visible = active;
+    if (indicator) indicator.visible = active;
+    if (!active) continue;
+    if (!indicator) continue;
+
+    if (landerX == null || landerY == null) {
+      indicator.alpha = 1;
+      continue;
+    }
+
+    const centerX = zone.x + zone.width / 2;
+    const zoneY = marker.y / PIXELS_PER_METER;
+    const dist = Math.hypot(landerX - centerX, landerY - zoneY);
+    const t = (dist - LZ_FADE_NEAR) / (LZ_FADE_FAR - LZ_FADE_NEAR);
+    indicator.alpha = Math.max(0, Math.min(1, t));
   }
 }
 
@@ -491,11 +651,14 @@ export function createTerrainSystem(): TerrainSystem {
     landingZones,
     foregroundHeights,
   );
-  const surfaceHeights = combineSurfaceHeights(foregroundHeights, middleHeights);
+  const surfaceHeights = combineSurfaceHeights(
+    foregroundHeights,
+    middleHeights,
+  );
   const bgHeights = generateHeightmap(TERRAIN_TOTAL_WIDTH, 0.25, [], 0.73);
   const visualForegroundHeights = generateVisualForegroundHeightmap(
     TERRAIN_TOTAL_WIDTH,
-    surfaceHeights,
+    foregroundHeights,
     tuning.foregroundJaggedness,
   );
 
@@ -504,9 +667,7 @@ export function createTerrainSystem(): TerrainSystem {
     heights: bgHeights,
     parallaxFactor: 0.2,
   };
-  bgLayer.container.addChild(
-    createTerrainGraphics(bgHeights, 0x1b2431, 0.62),
-  );
+  bgLayer.container.addChild(createTerrainGraphics(bgHeights, 0x1b2431, 0.62));
 
   const midLayer: TerrainLayer = {
     container: new Container(),
@@ -523,7 +684,7 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1.0,
   };
   fgLayer.container.addChild(
-    createTerrainGraphics(foregroundHeights, 0x9ba4b0, 1.0, true),
+    createTerrainGraphics(foregroundHeights, 0x9ba4b0, 1.0, 'mainGradient'),
   );
 
   const visualFgLayer: TerrainLayer = {
@@ -532,14 +693,20 @@ export function createTerrainSystem(): TerrainSystem {
     parallaxFactor: 1.28,
   };
   visualFgLayer.container.addChild(
-    createTerrainGraphics(visualForegroundHeights, 0xbcc2ca, 1.0, true),
+    createTerrainGraphics(
+      visualForegroundHeights,
+      VISUAL_FOREGROUND_FILL,
+      1.0,
+      'foregroundDark',
+    ),
   );
 
   const landingZoneMarkers = new Container();
   for (const zone of landingZones) {
     const marker = createLandingZoneMarker(zone);
     const heightIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
-    const zoneY = (foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) * PIXELS_PER_METER;
+    const zoneY =
+      (foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) * PIXELS_PER_METER;
     marker.y = zoneY;
     landingZoneMarkers.addChild(marker);
   }

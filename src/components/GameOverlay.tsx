@@ -9,6 +9,7 @@ import CrashOverlay from './ui/CrashOverlay';
 import PauseOverlay from './ui/PauseOverlay';
 import InfoDialog from './ui/InfoDialog';
 import LoadingScreen from './ui/LoadingScreen';
+import { tuning } from '../game/tuning';
 
 interface GameOverlayProps {
   actor: Actor<typeof gameMachine>;
@@ -37,14 +38,19 @@ export default function GameOverlay({
 
   const currentMission = missions[ctx.currentMission];
   const speed = Math.sqrt(ctx.velocity.x ** 2 + ctx.velocity.y ** 2);
+  const angleDeg = Math.abs((ctx.angle * 180) / Math.PI) % 360;
+  const landingAngleDeg = Math.min(angleDeg, 360 - angleDeg);
 
   function getStatusText(): string {
     if (state.matches('loading')) return 'Loading';
     if (state.matches('title')) return 'Ready';
     if (state.matches({ playing: 'descending' })) {
       if (ctx.fuel <= 0) return 'No Fuel';
-      if (speed > 1.5) return 'Too Fast';
-      return 'Descending';
+      if (speed > tuning.maxLandingSpeed) return 'High Speed';
+      if (landingAngleDeg > (tuning.maxLandingAngle * 180) / Math.PI) {
+        return 'Bad Angle';
+      }
+      return 'Nominal';
     }
     if (state.matches({ playing: 'landed' })) return 'Landed';
     if (state.matches({ playing: 'simulatingLanding' })) return 'Simulating';
