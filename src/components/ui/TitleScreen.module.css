@@ -1,0 +1,72 @@
+.container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  color: #888;
+  text-transform: uppercase;
+  margin: 0;
+  font-family: "Orbitron", ui-sans-serif, system-ui, sans-serif;
+}
+
+.title {
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 200;
+  letter-spacing: 0.15em;
+  color: #f4f4f5;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  font-family: "Goldman", ui-sans-serif, system-ui, sans-serif;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 3rem;
+  flex-direction: column;
+  align-items: center;
+}
+
+.primaryButton {
+  padding: 1rem 3rem;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f4f4f5;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.primaryButton:hover {
+  border-color: rgba(255, 204, 0, 0.8);
+  color: #ffcc00;
+}
+
+.secondaryButtonGroup {
+  display: flex;
+  gap: 1rem;
+}
+
+.secondaryButton {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #888;
+  cursor: pointer;
+  border-radius: 2px;
+}

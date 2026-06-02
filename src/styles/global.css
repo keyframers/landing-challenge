@@ -1,0 +1,41 @@
+@import url("https://fonts.googleapis.com/css2?family=Audiowide&family=Coda:wght@400;800&family=Genos:ital,wght@0,100..900;1,100..900&family=Goldman:wght@400;700&family=Orbitron:wght@400..900&display=swap");
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: #0a0a14;
+  color: #f4f4f5;
+  font-family: "Coda", ui-sans-serif, system-ui, sans-serif;
+}
+
+:is(h1, h2) {
+  font-family: "Orbitron", ui-sans-serif, system-ui, sans-serif;
+}
+
+:is(h3, h4, h5, h6) {
+  font-family: "Goldman", ui-sans-serif, system-ui, sans-serif;
+}
+
+button {
+  font-family: inherit;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+button:active {
+  transform: scale(0.98);
+}

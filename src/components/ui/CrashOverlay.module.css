@@ -1,0 +1,71 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: auto;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.content {
+  background: rgba(10, 10, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 2.5rem 3rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  max-width: 400px;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 300;
+  margin-bottom: 0.5rem;
+}
+
+.title.crashed {
+  color: #ff6644;
+}
+
+.title.missed {
+  color: #ffcc00;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.primaryButton {
+  padding: 0.7rem 2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f4f4f5;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.secondaryButton {
+  padding: 0.7rem 2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #888;
+  cursor: pointer;
+  border-radius: 2px;
+}
