@@ -27,13 +27,17 @@ export default function InfoPanel({
   showRoverButton,
 }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const continueRef = useRef<HTMLButtonElement>(null);
   useModalKeyboard(panelRef);
 
   useGSAP(
     () => {
       if (!panelRef.current) return;
 
-      const tl = gsap.timeline();
+      const focusContinue = () => continueRef.current?.focus();
+      requestAnimationFrame(focusContinue);
+
+      const tl = gsap.timeline({ onComplete: focusContinue });
 
       tl.from(
         `.${styles.panelBackground}`,
@@ -125,6 +129,7 @@ export default function InfoPanel({
               </Button>
             )}
             <Button
+              ref={continueRef}
               onClick={onContinue}
               className={styles.continueButton}
               data-primary="true"

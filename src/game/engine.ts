@@ -66,8 +66,8 @@ type VehicleMode = "lander" | "rover";
 type BrowserInspector = ReturnType<typeof createBrowserInspector>;
 type InspectWindow = Window & { __xstateInspector?: BrowserInspector };
 const RETURN_TO_LANDER_CLEARANCE = 1.5;
-const RETURN_TO_LANDER_BOOST_SPEED = 8;
-const RETURN_TO_LANDER_BOOST_IMPULSE = 90;
+const RETURN_TO_LANDER_BOOST_SPEED = 14;
+const RETURN_TO_LANDER_BOOST_IMPULSE = 220;
 const MANUAL_CAMERA_ZOOM = 1.4;
 const LANDED_CAMERA_ZOOM = 2.4;
 
@@ -409,21 +409,30 @@ export async function createGame(
     setVehicleMode("lander");
   }
 
-  function boostLanderFromGround() {
+  function returnToLanderFromRover() {
     if (!vehicle) return;
     const body = vehicle.body.rigidBody;
-    const pos = body.translation();
-    const vel = body.linvel();
-    const terrainH = getTerrainHeightAt(terrain.surfaceHeights, pos.x);
+    const roverPos = body.translation();
+    const roverVel = body.linvel();
+    vehicle.fuel = MAX_FUEL;
+    vehicle.destroyed = false;
+    setVehicleMode("lander");
     body.setTranslation(
       {
-        x: pos.x,
-        y: terrainH - LANDER_HEIGHT / 2 - RETURN_TO_LANDER_CLEARANCE,
+        x: roverPos.x,
+        y:
+          roverPos.y -
+          ROVER_HEIGHT / 2 -
+          LANDER_HEIGHT / 2 -
+          RETURN_TO_LANDER_CLEARANCE,
       },
       true
     );
     body.setRotation(0, true);
-    body.setLinvel({ x: vel.x, y: Math.min(vel.y, -RETURN_TO_LANDER_BOOST_SPEED) }, true);
+    body.setLinvel(
+      { x: roverVel.x * 0.35, y: -RETURN_TO_LANDER_BOOST_SPEED },
+      true
+    );
     body.setAngvel(0, true);
     applyThrust(body, RETURN_TO_LANDER_BOOST_IMPULSE, { x: 0, y: -1 });
     vehicle.thrustLevel = 1;
@@ -665,11 +674,11 @@ export async function createGame(
           if (vehicle) {
             vehicle.fuel = MAX_FUEL;
             vehicle.destroyed = false;
-            setVehicleMode("lander");
             if (prev === "landed") {
+              setVehicleMode("lander");
               startMissionBoost();
             } else {
-              boostLanderFromGround();
+              returnToLanderFromRover();
             }
           }
         } else {

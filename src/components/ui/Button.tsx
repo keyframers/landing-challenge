@@ -1,4 +1,4 @@
-import { useRef, type HTMLAttributes } from "react";
+import { forwardRef, useRef, type HTMLAttributes } from "react";
 import gsap from "gsap";
 import SplitText from "gsap/SplitText";
 import classNames from "classnames";
@@ -16,7 +16,10 @@ type ButtonProps = HTMLAttributes<HTMLButtonElement> & {
   subtle?: boolean;
 };
 
-export default function Button({ className, large, subtle, children, ...props }: ButtonProps) {
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { className, large, subtle, children, ...props },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -31,9 +34,12 @@ export default function Button({ className, large, subtle, children, ...props }:
       className={classNames(styles.root, className)}
       data-large={large}
       data-subtle={subtle}
+      ref={ref}
       {...props}
     >
       {children}
     </button>
   );
-}
+});
+
+export default Button;
