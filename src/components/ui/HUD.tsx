@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import classNames from "classnames";
 import styles from "./HUD.module.css";
 import { tuning } from "../../game/tuning";
@@ -30,11 +31,26 @@ export default function HUD({
   onPause,
   onMissionSelect,
 }: HUDProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const angleDeg = Math.abs((angle * 180) / Math.PI) % 360;
   const landingAngleDeg = Math.min(angleDeg, 360 - angleDeg);
 
+  useGSAP(
+    () => {
+      if (!containerRef.current) return;
+      gsap.from(containerRef.current.children, {
+        y: -10,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power3.out",
+      });
+    },
+    { scope: containerRef }
+  );
+
   return (
-    <div className={styles.container}>
+    <div ref={containerRef} className={styles.container}>
       {/* Top bar */}
       <div className={styles.topBar}>
         <div className={styles.logo} onClick={() => window.location.reload()}>
