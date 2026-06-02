@@ -18,6 +18,12 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Root font-size scales with viewport width so all rem-based
+     font sizes are relative to viewport width. 1.6vw ≈ 16px at 1000px. */
+  font-size: clamp(11px, 1.6vw, 22px);
+}
+
 html,
 body {
   margin: 0;

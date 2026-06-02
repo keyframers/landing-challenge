@@ -27,7 +27,6 @@ export type GameEvent =
   | { type: 'RETRY' }
   | { type: 'SIMULATE' }
   | { type: 'CONTINUE' }
-  | { type: 'ARRIVED' }
   | { type: 'DRIVE_ROVER' }
   | { type: 'RETURN_TO_LANDER' }
   | { type: 'PAUSE' }
@@ -201,7 +200,7 @@ export const gameMachine = setup({
           on: {
             CONTINUE: [
               {
-                target: 'transit',
+                target: 'descending',
                 guard: 'hasNextMission',
                 actions: 'advanceMission',
               },
@@ -210,6 +209,10 @@ export const gameMachine = setup({
             DRIVE_ROVER: {
               target: 'rover',
               guard: 'canDriveRover',
+            },
+            EXPLORE_MISSIONS: {
+              target: '#lunarLander.manual',
+              actions: 'resetManualBrowse',
             },
           },
         },
@@ -234,12 +237,6 @@ export const gameMachine = setup({
               target: 'landed',
               actions: 'completeMission',
             },
-          },
-        },
-
-        transit: {
-          on: {
-            ARRIVED: 'descending',
           },
         },
 

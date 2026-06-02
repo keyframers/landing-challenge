@@ -1,4 +1,5 @@
 import { Application, Container } from 'pixi.js';
+import gsap from 'gsap';
 import { createBrowserInspector } from '@statelyai/inspect';
 import { createActor, type Actor } from 'xstate';
 import { gameMachine } from '../machines/gameMachine';
@@ -70,6 +71,7 @@ const RETURN_TO_LANDER_CLEARANCE = 1.5;
 const RETURN_TO_LANDER_BOOST_SPEED = 8;
 const RETURN_TO_LANDER_BOOST_IMPULSE = 90;
 const MANUAL_CAMERA_ZOOM = 1.4;
+const LANDED_CAMERA_ZOOM = 2.4;
 
 const inspector = createBrowserInspector({
   filter: (event) => {
@@ -219,23 +221,12 @@ export async function createGame(
   let accumulator = 0;
   applyRenderMode(true);
 
-  interface TransitState {
-    toX: number;
+  interface StarterBoostState {
     burnRemaining: number;
-    elapsed: number;
   }
-  let transit: TransitState | null = null;
+  let starterBoost: StarterBoostState | null = null;
 
-  interface SimulatedLandingState {
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
-    peakY: number;
-    elapsed: number;
-    duration: number;
-  }
-  let simulatedLanding: SimulatedLandingState | null = null;
+  let landingTween: gsap.core.Tween | null = null;
 
   function getLandingTarget(missionIndex: number): { x: number; y: number } {
     const mission = missions[missionIndex];
@@ -413,24 +404,43 @@ export async function createGame(
     const target = getLandingTarget(missionIndex);
     const body = vehicle.body.rigidBody;
     const startY = target.y - LANDER_HEIGHT / 2 - 45;
+    const endY = target.y - LANDER_HEIGHT / 2;
     vehicle.destroyed = false;
-    vehicle.thrustLevel = 0;
+    vehicle.thrustLevel = 1;
     setVehicleMode('lander');
-
-    simulatedLanding = {
-      fromX: target.x,
-      fromY: startY,
-      toX: target.x,
-      toY: target.y - LANDER_HEIGHT / 2,
-      peakY: startY,
-      elapsed: 0,
-      duration: 1.5,
-    };
 
     body.setTranslation({ x: target.x, y: startY }, true);
     body.setLinvel({ x: 0, y: 0 }, true);
     body.setAngvel(0, true);
     body.setRotation(0, true);
+
+    const pos = { x: target.x, y: startY };
+
+    if (landingTween) landingTween.kill();
+    landingTween = gsap.to(pos, {
+      y: endY,
+      duration: 1.5,
+      ease: 'expo.out',
+      onUpdate: () => {
+        if (!vehicle) return;
+        const body = vehicle.body.rigidBody;
+        body.setTranslation({ x: pos.x, y: pos.y }, true);
+        body.setLinvel({ x: 0, y: 0 }, true);
+        body.setAngvel(0, true);
+        body.setRotation(0, true);
+        vehicle.thrustLevel = 1;
+        syncVehicleGraphics();
+      },
+      onComplete: () => {
+        landingTween = null;
+        if (vehicle) vehicle.thrustLevel = 0;
+        placeVehicleLanded(actor.getSnapshot().context.currentMission);
+        actor.send({
+          type: 'LANDED',
+          missionIndex: actor.getSnapshot().context.currentMission,
+        });
+      },
+    });
   }
 
   function syncVehicleGraphics() {
@@ -467,112 +477,42 @@ export async function createGame(
     }
   }
 
-  // The launch/transit arc is driven by the Pixi ticker (see updateTransit) so
-  // it shares the physics clock and pauses cleanly. It is used both for hopping
-  // to the next mission and for relaunching from the rover back up to the
-  // current mission's starting point.
-  function startTransit(targetMissionIndex: number) {
+  function startMissionBoost() {
     if (!vehicle) return;
     setVehicleMode('lander');
-
-    const to = getLandingTarget(targetMissionIndex);
-    const pos = vehicle.body.rigidBody.translation();
-
     const body = vehicle.body.rigidBody;
-    const dx = to.x - pos.x;
-    const vx = Math.max(
-      -tuning.transitMaxHorizontalSpeed,
-      Math.min(tuning.transitMaxHorizontalSpeed, dx / tuning.transitMaxSeconds),
-    );
-    const launchAngle = Math.sign(dx || 1) * tuning.transitLaunchAngle;
-
-    transit = {
-      toX: to.x,
-      burnRemaining: tuning.transitEngineBurnSeconds,
-      elapsed: 0,
-    };
-
-    body.setLinvel({ x: vx, y: 0 }, true);
-    body.setAngvel(0, true);
-    body.setRotation(launchAngle, true);
-  }
-
-  function updateTransit(delta: number) {
-    if (!transit || !vehicle) return;
-
-    transit.elapsed += delta;
-    world.gravity = { x: 0, y: tuning.gravity };
-    const body = vehicle.body.rigidBody;
-    accumulator += delta;
-    while (accumulator >= FIXED_TIMESTEP) {
-      updateLanderPhysics(
-        vehicle as unknown as Lander,
-        input.state,
-        FIXED_TIMESTEP,
-      );
-
-      if (transit.burnRemaining > 0) {
-        applyThrust(body, tuning.transitLaunchForce * FIXED_TIMESTEP, {
-          x: 0,
-          y: -1,
-        });
-        vehicle.thrustLevel = 1;
-        transit.burnRemaining -= FIXED_TIMESTEP;
-      }
-
-      world.step();
-
-      const vel = body.linvel();
-      if (Math.abs(vel.x) > tuning.transitMaxHorizontalSpeed) {
-        body.setLinvel(
-          {
-            x: Math.sign(vel.x) * tuning.transitMaxHorizontalSpeed,
-            y: vel.y,
-          },
-          true,
-        );
-      }
-
-      accumulator -= FIXED_TIMESTEP;
-    }
-
     const pos = body.translation();
-    const vel = body.linvel();
     const terrainH = getTerrainHeightAt(terrain.surfaceHeights, pos.x);
-    const altitude = terrainH - pos.y - LANDER_HEIGHT / 2;
-    if (Math.abs(pos.x - transit.toX) < tuning.transitHandOffDistance) {
-      body.setLinvel(
-        {
-          x: Math.max(
-            -tuning.transitMaxHorizontalSpeed,
-            Math.min(tuning.transitMaxHorizontalSpeed, vel.x),
-          ),
-          y: vel.y,
-        },
-        true,
-      );
-    }
-    syncVehicleGraphics();
-
-    particleTimer += delta;
-    if (particleTimer >= 0.03) {
-      emitLanderParticles(vehicle as unknown as Lander, particles);
-      particleTimer = 0;
-    }
-
-    if (
-      (vel.y > 0 && altitude <= tuning.transitPlayableAltitude) ||
-      transit.elapsed >= tuning.transitMaxSeconds
-    ) {
-      transit = null;
-      vehicle.fuel = 100;
-      vehicle.destroyed = false;
-      vehicle.thrustLevel = 0;
-      actor.send({ type: 'ARRIVED' });
-    }
+    body.setTranslation(
+      { x: pos.x, y: terrainH - LANDER_HEIGHT / 2 - 0.75 },
+      true,
+    );
+    body.setLinvel({ x: 1.5, y: -1.5 }, true);
+    body.setAngvel(0, true);
+    body.setRotation(tuning.starterLaunchAngle, true);
+    starterBoost = { burnRemaining: tuning.starterEngineBurnSeconds };
   }
 
-  function checkContactAndLanding() {
+  function crashVehicle(pos: { x: number; y: number }) {
+    if (!vehicle || vehicle.destroyed) return;
+    vehicle.destroyed = true;
+    vehicle.body.rigidBody.setLinvel({ x: 0, y: 0 }, true);
+    vehicle.body.rigidBody.setAngvel(0, true);
+    vehicle.body.rigidBody.setRotation(0, true);
+    particles.emitExplosion(pos.x, pos.y);
+    vehicle.landerGfx.visible = false;
+    actor.send({ type: 'CRASHED' });
+  }
+
+  function isLanderTouchingTerrain() {
+    if (!vehicle) return false;
+    const pos = vehicle.body.rigidBody.translation();
+    const terrainH = getTerrainHeightAt(terrain.surfaceHeights, pos.x);
+    const bottomY = pos.y + LANDER_HEIGHT / 2;
+    return bottomY >= terrainH - 0.25;
+  }
+
+  function checkContactAndLanding(impactSpeed?: number) {
     if (!vehicle || vehicle.destroyed) return;
 
     const state = actor.getSnapshot();
@@ -592,15 +532,10 @@ export async function createGame(
     if (bottomY < terrainH - 0.25) return;
 
     if (
-      speed > tuning.maxLandingSpeed ||
+      (impactSpeed ?? speed) > tuning.maxLandingSpeed ||
       normalizedAngle > tuning.maxLandingAngle
     ) {
-      vehicle.destroyed = true;
-      vehicle.body.rigidBody.setLinvel({ x: 0, y: 0 }, true);
-      vehicle.body.rigidBody.setAngvel(0, true);
-      particles.emitExplosion(pos.x, pos.y);
-      vehicle.landerGfx.visible = false;
-      actor.send({ type: 'CRASHED' });
+      crashVehicle(pos);
       return;
     }
 
@@ -620,12 +555,7 @@ export async function createGame(
     if (!result) return;
 
     if (result.type === 'crashed') {
-      vehicle.destroyed = true;
-      vehicle.body.rigidBody.setLinvel({ x: 0, y: 0 }, true);
-      vehicle.body.rigidBody.setAngvel(0, true);
-      particles.emitExplosion(pos.x, pos.y);
-      vehicle.landerGfx.visible = false;
-      actor.send({ type: 'CRASHED' });
+      crashVehicle(pos);
     } else if (result.type === 'missed') {
       actor.send({ type: 'MISSED' });
     } else {
@@ -667,19 +597,22 @@ export async function createGame(
     // treated as a fresh launch.
     if (playing === null) return;
 
-    const resumingFromPause = prev === 'paused';
+    const resumingFromPause =
+      prev === 'paused' && playing !== 'simulatingLanding';
     if (resumingFromPause) return; // history resume — keep everything as-is
 
     switch (playing) {
       case 'descending':
-        if (prev === 'transit' || prev === 'rover') {
-          // Arrived via transit or switched back from rover — the vehicle is
-          // already positioned, so keep the body and make it playable.
+        if (prev === 'landed' || prev === 'rover') {
+          // Continue/return keeps the same body and hands control back
+          // immediately in the normal descending state.
           if (vehicle) {
             vehicle.fuel = 100;
             vehicle.destroyed = false;
             setVehicleMode('lander');
-            if (prev === 'rover') {
+            if (prev === 'landed') {
+              startMissionBoost();
+            } else {
               boostLanderFromGround();
             }
           }
@@ -701,10 +634,6 @@ export async function createGame(
 
       case 'simulatingLanding':
         startSimulatedLanding(state.context.currentMission);
-        break;
-
-      case 'transit':
-        startTransit(state.context.currentMission);
         break;
 
       case 'crashed':
@@ -755,40 +684,6 @@ export async function createGame(
     });
   }
 
-  function updateSimulatedLanding(delta: number) {
-    if (!vehicle || !simulatedLanding) return;
-
-    simulatedLanding.elapsed = Math.min(
-      simulatedLanding.duration,
-      simulatedLanding.elapsed + delta,
-    );
-    const t = simulatedLanding.elapsed / simulatedLanding.duration;
-    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-    const x =
-      simulatedLanding.fromX +
-      (simulatedLanding.toX - simulatedLanding.fromX) * eased;
-    const y =
-      simulatedLanding.fromY * (1 - eased) * (1 - eased) +
-      simulatedLanding.peakY * 2 * eased * (1 - eased) +
-      simulatedLanding.toY * eased * eased;
-
-    const body = vehicle.body.rigidBody;
-    body.setTranslation({ x, y }, true);
-    body.setLinvel({ x: 0, y: 0 }, true);
-    body.setAngvel(0, true);
-    body.setRotation(0, true);
-    syncVehicleGraphics();
-
-    if (t >= 1) {
-      simulatedLanding = null;
-      placeVehicleLanded(actor.getSnapshot().context.currentMission);
-      actor.send({
-        type: 'LANDED',
-        missionIndex: actor.getSnapshot().context.currentMission,
-      });
-    }
-  }
-
   function emitRoverBoostParticles() {
     if (!vehicle || !vehicle.roverBoosting) return;
 
@@ -821,8 +716,49 @@ export async function createGame(
           input.state,
           FIXED_TIMESTEP,
         );
+        if (starterBoost && starterBoost.burnRemaining > 0) {
+          applyThrust(
+            vehicle.body.rigidBody,
+            tuning.starterLaunchForce * FIXED_TIMESTEP,
+            { x: 0, y: -1 },
+          );
+          vehicle.thrustLevel = 1;
+          vehicle.fuel = Math.max(
+            0,
+            vehicle.fuel - tuning.fuelBurnMain * FIXED_TIMESTEP,
+          );
+          starterBoost.burnRemaining -= FIXED_TIMESTEP;
+          if (starterBoost.burnRemaining <= 0) {
+            starterBoost = null;
+          }
+        }
+        const preStepVel = vehicle.body.rigidBody.linvel();
+        const preStepPos = vehicle.body.rigidBody.translation();
+        const impactSpeed = Math.hypot(preStepVel.x, preStepVel.y);
+        const terrainH = getTerrainHeightAt(
+          terrain.surfaceHeights,
+          preStepPos.x,
+        );
+        const predictedBottomY =
+          preStepPos.y + LANDER_HEIGHT / 2 + preStepVel.y * FIXED_TIMESTEP;
+        const willHitFast =
+          impactSpeed > tuning.maxLandingSpeed &&
+          predictedBottomY >= terrainH - 0.25;
         world.step();
         accumulator -= FIXED_TIMESTEP;
+        if (willHitFast) {
+          crashVehicle(vehicle.body.rigidBody.translation());
+          break;
+        }
+        if (isLanderTouchingTerrain()) {
+          checkContactAndLanding(impactSpeed);
+          if (
+            vehicle.destroyed ||
+            !actor.getSnapshot().matches({ playing: 'descending' })
+          ) {
+            break;
+          }
+        }
       }
 
       syncVehicleGraphics();
@@ -866,10 +802,16 @@ export async function createGame(
         telemetryTimer = 0;
         sendTelemetry();
       }
-    } else if (playing === 'transit') {
-      updateTransit(delta);
     } else if (playing === 'simulatingLanding') {
-      updateSimulatedLanding(delta);
+      // GSAP tween drives position; just sync graphics + emit particles
+      if (vehicle) {
+        syncVehicleGraphics();
+        particleTimer += delta;
+        if (particleTimer >= 0.03) {
+          emitLanderParticles(vehicle as unknown as Lander, particles);
+          particleTimer = 0;
+        }
+      }
     } else if (vehicle) {
       // landed / crashed / missed / paused: hold position, keep graphics synced.
       syncVehicleGraphics();
@@ -889,6 +831,8 @@ export async function createGame(
       const pos = vehicle.body.rigidBody.translation();
       if (playing === 'rover') {
         focusCamera(camera, pos.x, pos.y, 2.2, 0.5, 0.56);
+      } else if (playing === 'landed') {
+        focusCamera(camera, pos.x, pos.y, LANDED_CAMERA_ZOOM, 1 / 3, 0.58);
       } else {
         const target = getLandingTarget(state.context.currentMission);
         frameCamera(camera, pos.x, pos.y, target.x, target.y);
@@ -931,8 +875,11 @@ export async function createGame(
       actor.stop();
       input.destroy();
       window.removeEventListener('resize', handleResize);
-      transit = null;
-      simulatedLanding = null;
+      starterBoost = null;
+      if (landingTween) {
+        landingTween.kill();
+        landingTween = null;
+      }
       particles.destroy();
       app.destroy(true);
     },

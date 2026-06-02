@@ -44,7 +44,6 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
     }
     if (state.matches({ playing: "landed" })) return "Landed";
     if (state.matches({ playing: "simulatingLanding" })) return "Simulating";
-    if (state.matches({ playing: "transit" })) return "In Transit";
     if (state.matches({ playing: "rover" })) return "Rover Active";
     if (state.matches({ playing: "crashed" })) return "Crashed";
     if (state.matches({ playing: "missed" })) return "Off Target";
@@ -99,6 +98,9 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
             <InfoPanel
               mission={currentMission}
               onContinue={() => actor.send({ type: "CONTINUE" })}
+              onExploreMissions={() =>
+                actor.send({ type: "EXPLORE_MISSIONS" })
+              }
               onDriveRover={() => actor.send({ type: "DRIVE_ROVER" })}
               showRoverButton={
                 currentMission.roverAvailable || ctx.roverUnlocked
@@ -125,44 +127,11 @@ export function GameOverlay({ actor, loadingProgress }: GameOverlayProps) {
           {state.matches({ playing: "paused" }) && (
             <PauseOverlay
               onResume={() => actor.send({ type: "RESUME" })}
+              onSimulate={() => actor.send({ type: "SIMULATE" })}
               onExploreMissions={() =>
                 actor.send({ type: "EXPLORE_MISSIONS" })
               }
             />
-          )}
-
-          {state.matches({ playing: "transit" }) && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: "6rem",
-                left: "50%",
-                transform: "translateX(-50%)",
-                textAlign: "center",
-                pointerEvents: "none",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.75rem",
-                  letterSpacing: "0.2em",
-                  color: "#888",
-                  textTransform: "uppercase",
-                }}
-              >
-                In Transit
-              </div>
-              <div
-                style={{
-                  fontSize: "1.2rem",
-                  fontWeight: 200,
-                  color: "#f4f4f5",
-                  marginTop: "0.3rem",
-                }}
-              >
-                {missions[ctx.currentMission]?.name ?? "Next Mission"}
-              </div>
-            </div>
           )}
 
           {state.matches({ playing: "rover" }) && (

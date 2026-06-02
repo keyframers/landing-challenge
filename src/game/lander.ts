@@ -187,7 +187,7 @@ export function emitLanderParticles(
   const rot = lander.body.rigidBody.rotation();
   const hh = LANDER_HEIGHT / 2;
 
-  const nozzleX = pos.x + Math.sin(rot) * hh;
+  const nozzleX = pos.x - Math.sin(rot) * hh;
   const nozzleY = pos.y + Math.cos(rot) * hh;
 
   particles.emitThrust(nozzleX, nozzleY, rot, lander.thrustLevel);

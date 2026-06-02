@@ -6,6 +6,7 @@ import styles from "./InfoPanel.module.css";
 interface InfoPanelProps {
   mission: MissionData;
   onContinue: () => void;
+  onExploreMissions?: () => void;
   onDriveRover?: () => void;
   showRoverButton: boolean;
 }
@@ -14,6 +15,7 @@ import { useGSAP } from "@gsap/react";
 export function InfoPanel({
   mission,
   onContinue,
+  onExploreMissions,
   onDriveRover,
   showRoverButton,
 }: InfoPanelProps) {
@@ -84,6 +86,11 @@ export function InfoPanel({
         {showRoverButton && (
           <button onClick={onDriveRover} className={styles.roverButton}>
             Drive Rover
+          </button>
+        )}
+        {onExploreMissions && (
+          <button onClick={onExploreMissions} className={styles.roverButton}>
+            Explore
           </button>
         )}
         <button onClick={onContinue} className={styles.continueButton}>

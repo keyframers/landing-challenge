@@ -10,14 +10,14 @@ import {
  * and changes take effect immediately. `startAltitude` only applies on the next
  * (re)launch.
  *
- * Force/torque values are impulse magnitudes scaled by dt; with the lander body
- * mass (~40kg) the engine TWR is roughly mainEngineForce / (40 * gravity).
+ * Force/torque values are impulse magnitudes scaled by dt; with the Apollo LM
+ * mass the main engine TWR is roughly mainEngineForce / (mass * gravity).
  */
 export const tuning = {
   // Physics
   gravity: MOON_GRAVITY,
-  mainEngineForce: 130,
-  sideEngineTorque: 120,
+  mainEngineForce: 45000,
+  sideEngineTorque: 42000,
   fuelBurnMain: 2,
   fuelBurnSide: 1,
 
@@ -39,16 +39,11 @@ export const tuning = {
   roverSuspensionMaxForce: 6000,
 
   // Misc
-  transitLaunchForce: 650,
-  transitEngineBurnSeconds: 0.8,
-  transitLaunchAngle: 0.35,
-  transitPlayableAltitude: 50,
-  transitMaxHorizontalSpeed: 10,
-  transitHandOffDistance: 120,
-  transitHandOffVerticalSpeed: 14,
-  transitMaxSeconds: 20,
+  starterLaunchForce: 120000,
+  starterEngineBurnSeconds: 1.15,
+  starterLaunchAngle: 0.06,
   foregroundJaggedness: 1,
-  wireframe: true,
+  wireframe: false,
   showDebugBounds: false,
 };
 

@@ -2,6 +2,7 @@ import RAPIER from '@dimforge/rapier2d-compat';
 import {
   LANDER_WIDTH,
   LANDER_HEIGHT,
+  LUNAR_MODULE_MASS,
   ROVER_WIDTH,
   ROVER_HEIGHT,
   TERRAIN_SEGMENT_SIZE,
@@ -79,8 +80,22 @@ export function createLanderBody(
     createVehicleColliderDesc('lander'),
     rigidBody,
   );
+  applyLanderMass(rigidBody);
 
   return { rigidBody, collider };
+}
+
+function applyLanderMass(rigidBody: RAPIER.RigidBody) {
+  const inertia =
+    (LUNAR_MODULE_MASS *
+      (LANDER_WIDTH * LANDER_WIDTH + LANDER_HEIGHT * LANDER_HEIGHT)) /
+    12;
+  rigidBody.setAdditionalMassProperties(
+    LUNAR_MODULE_MASS,
+    { x: 0, y: 0 },
+    inertia,
+    true,
+  );
 }
 
 export function replaceVehicleCollider(
@@ -106,7 +121,7 @@ export function replaceVehicleCollider(
     );
     body.rigidBody.setAngularDamping(3.5);
   } else {
-    body.rigidBody.setAdditionalMass(0, true);
+    applyLanderMass(body.rigidBody);
     body.rigidBody.setAngularDamping(0.5);
   }
 }

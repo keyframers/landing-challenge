@@ -4,6 +4,7 @@ export const FIXED_TIMESTEP = 1 / 60;
 
 export const LANDER_WIDTH = 4;
 export const LANDER_HEIGHT = 5;
+export const LUNAR_MODULE_MASS = 15200;
 
 export const MAX_LANDING_SPEED = 4;
 export const MAX_LANDING_ANGLE = Math.PI / 12; // 15 degrees
