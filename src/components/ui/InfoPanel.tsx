@@ -80,6 +80,7 @@ export default function InfoPanel({
   return (
     <div ref={panelRef} className={styles.panel}>
       <div className={styles.panelBackground} />
+
       <div className={styles.panelContent}>
         <div className={styles.badge}>★ Mission Unlocked</div>
         <h2 className={styles.title}>
@@ -111,7 +112,7 @@ export default function InfoPanel({
         </div>
       </div>
 
-      <MissionImages mission={mission} />
+      <MissionImages className={styles.images} mission={mission} />
     </div>
   );
 }

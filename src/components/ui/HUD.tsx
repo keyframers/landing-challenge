@@ -57,7 +57,9 @@ export default function HUD({
         </div>
         <ThrustGauge level={thrustLevel} />
         <div className={`${styles.panelLabel} ${styles.fuelLabel}`}>Fuel</div>
-        <div className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}>
+        <div
+          className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}
+        >
           {Math.round(fuel)}%
         </div>
       </div>
@@ -93,10 +95,7 @@ function ThrustGauge({ level }: { level: number }) {
   const needle = useRef({ v: 0 });
 
   useEffect(() => {
-    const colorAt = gsap.utils.interpolate(
-      "rgba(255,255,255,0.08)",
-      "#ffcc00",
-    );
+    const colorAt = gsap.utils.interpolate("rgba(255,255,255,0.08)", "#ffcc00");
     const obj = needle.current;
     gsap.to(obj, {
       v: level,
@@ -172,7 +171,7 @@ function MissionProgress({
         if (i < current) dotClass = styles.completed;
         else if (i === current) dotClass = styles.current;
         return (
-          <Button
+          <button
             key={i}
             onClick={() => onMissionSelect?.(i)}
             className={`${styles.progressDot} ${dotClass} ${onMissionSelect ? styles.clickable : ""}`}

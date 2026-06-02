@@ -29,6 +29,11 @@ export default function InfoPanelLabel({
   useGSAP(
     () => {
       if (!containerRef.current) return;
+
+      gsap.from(containerRef.current, {
+        letterSpacing: "10px",
+        duration: 1,
+      });
     },
     { scope: containerRef },
   );
