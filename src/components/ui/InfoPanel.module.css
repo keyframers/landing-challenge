@@ -14,6 +14,8 @@
   background: var(--content-bg);
   z-index: -1;
   height: 100dvh;
+  opacity: 0.8;
+  backdrop-filter: blur(2px);
 }
 
 .badge {
