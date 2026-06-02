@@ -22,7 +22,6 @@
   font-size: clamp(2rem, 7vw, 5rem);
   font-weight: 200;
   letter-spacing: 0.15em;
-  color: #f4f4f5;
   margin: 0 0 1rem 0;
   text-transform: uppercase;
   font-family: "Goldman", ui-sans-serif, system-ui, sans-serif;
