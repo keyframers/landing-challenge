@@ -1,19 +1,29 @@
 .images {
-  padding: 1rem 0;
+  padding: 4rem;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: end;
+  align-items: start;
   gap: 1rem;
-  position: absolute;
-  right: 100%;
-  top: 0;
-  bottom: 0;
-  width: 30vw;
-  overflow-y: auto;
+}
+
+.images::-webkit-scrollbar {
+  width: 10px;
+}
+
+.images::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.images::-webkit-scrollbar-thumb {
+  background: var(--subtle);
+  border-radius: 3px;
 }
 
 .image {
-  flex: 1 1 auto;
-  background: rgba(255, 255, 255, 0.05);
+  flex: 0 1 calc(50% - 0.5rem);
+  border-radius: 10px;
+  overflow: hidden;
   /* display: flex;
   align-items: stretch;
   justify-content: end; */

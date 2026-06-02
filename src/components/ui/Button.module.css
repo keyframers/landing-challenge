@@ -10,11 +10,25 @@
   border-radius: 2px;
   transition: all 0.3s;
   appearance: none;
+  position: relative;
+}
+
+.root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 0px solid;
+  border-color: inherit;
+  transition: border-width 0.3s;
 }
 
 .root:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.root:hover::before {
+  border-width: 4px;
 }
 
 .root[data-large="true"] {

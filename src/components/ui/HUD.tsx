@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import styles from './HUD.module.css';
-import { tuning } from '../../game/tuning';
-import Button from './Button';
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import classNames from "classnames";
+import styles from "./HUD.module.css";
+import { tuning } from "../../game/tuning";
+import Button from "./Button";
 
 interface HUDProps {
   fuel: number;
@@ -54,14 +55,10 @@ export default function HUD({
 
       {/* Left panel - thrust gauge */}
       <div className={styles.leftPanel}>
-        <div className={`${styles.panelLabel} ${styles.thrustLabel}`}>
-          Thrust
-        </div>
+        <div className={classNames(styles.panelLabel, styles.thrustLabel)}>Thrust</div>
         <ThrustGauge level={thrustLevel} />
-        <div className={`${styles.panelLabel} ${styles.fuelLabel}`}>Fuel</div>
-        <div
-          className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}
-        >
+        <div className={classNames(styles.panelLabel, styles.fuelLabel)}>Fuel</div>
+        <div className={classNames(styles.fuelValue, fuel < 20 ? styles.low : styles.normal)}>
           {Math.round(fuel)}%
         </div>
       </div>
@@ -97,12 +94,12 @@ function ThrustGauge({ level }: { level: number }) {
   const needle = useRef({ v: 0 });
 
   useEffect(() => {
-    const colorAt = gsap.utils.interpolate('rgba(255,255,255,0.08)', '#ffcc00');
+    const colorAt = gsap.utils.interpolate("rgba(255,255,255,0.08)", "#ffcc00");
     const obj = needle.current;
     gsap.to(obj, {
       v: level,
       duration: 0.6,
-      ease: 'expo.out',
+      ease: "expo.out",
       overwrite: true,
       onUpdate: () => {
         const v = obj.v;
@@ -136,21 +133,11 @@ function ThrustGauge({ level }: { level: number }) {
   );
 }
 
-function TelemetryItem({
-  label,
-  value,
-  warn,
-}: {
-  label: string;
-  value: string;
-  warn?: boolean;
-}) {
+function TelemetryItem({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
   return (
     <div className={styles.telemetryItem}>
       <div className={styles.telemetryLabel}>{label}</div>
-      <div
-        className={`${styles.telemetryValue} ${warn ? styles.warning : styles.normal}`}
-      >
+      <div className={classNames(styles.telemetryValue, warn ? styles.warning : styles.normal)}>
         {value}
       </div>
     </div>
@@ -173,11 +160,15 @@ function MissionProgress({
         if (i < current) dotClass = styles.completed;
         else if (i === current) dotClass = styles.current;
         return (
-          <Button
+          <button
             key={i}
             onClick={() => onMissionSelect?.(i)}
-            className={`${styles.progressDot} ${dotClass} ${onMissionSelect ? styles.clickable : ''}`}
-            style={{ cursor: onMissionSelect ? 'pointer' : 'default' }}
+            className={classNames(
+              styles.progressDot,
+              dotClass,
+              onMissionSelect ? styles.clickable : ""
+            )}
+            style={{ cursor: onMissionSelect ? "pointer" : "default" }}
           />
         );
       })}
