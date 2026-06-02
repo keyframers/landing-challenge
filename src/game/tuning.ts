@@ -1,8 +1,4 @@
-import {
-  MAX_LANDING_SPEED,
-  MAX_LANDING_ANGLE,
-  MOON_GRAVITY,
-} from './constants';
+import { MAX_LANDING_SPEED, MAX_LANDING_ANGLE, MOON_GRAVITY } from "./constants";
 
 /**
  * Live-tweakable game parameters. The engine reads from this object every frame
@@ -18,8 +14,8 @@ export const tuning = {
   gravity: MOON_GRAVITY,
   mainEngineForce: 45000,
   sideEngineTorque: 70000,
-  fuelBurnMain: 4.75,
-  fuelBurnSide: 1.15,
+  fuelBurnMain: 3,
+  fuelBurnSide: 1,
 
   // Mission / landing
   startAltitude: 150,
