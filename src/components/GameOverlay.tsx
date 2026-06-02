@@ -34,6 +34,7 @@ export default function GameOverlay({
   const ctx = state.context;
   const touchXRef = useRef<number | null>(null);
   const touchYRef = useRef<number | null>(null);
+  const [showControls, setShowControls] = useState(false);
 
   const currentMission = missions[ctx.currentMission];
   const speed = Math.sqrt(ctx.velocity.x ** 2 + ctx.velocity.y ** 2);
@@ -77,8 +78,16 @@ export default function GameOverlay({
         />
       )}
 
-      {state.matches("info") && (
-        <InfoDialog onClose={() => actor.send({ type: "CLOSE" })} />
+      {(state.matches("info") || showControls) && (
+        <InfoDialog
+          onClose={() => {
+            if (showControls) {
+              setShowControls(false);
+            } else {
+              actor.send({ type: "CLOSE" });
+            }
+          }}
+        />
       )}
 
       {typeof state.value === "object" && "playing" in state.value && (
@@ -115,6 +124,8 @@ export default function GameOverlay({
               type="crashed"
               onRetry={() => actor.send({ type: "RETRY" })}
               onSimulate={() => actor.send({ type: "SIMULATE" })}
+              onExplore={() => actor.send({ type: "EXPLORE_MISSIONS" })}
+              onControls={() => setShowControls(true)}
             />
           )}
 
@@ -123,6 +134,8 @@ export default function GameOverlay({
               type="missed"
               onRetry={() => actor.send({ type: "RETRY" })}
               onSimulate={() => actor.send({ type: "SIMULATE" })}
+              onExplore={() => actor.send({ type: "EXPLORE_MISSIONS" })}
+              onControls={() => setShowControls(true)}
             />
           )}
 
@@ -131,6 +144,7 @@ export default function GameOverlay({
               onResume={() => actor.send({ type: "RESUME" })}
               onSimulate={() => actor.send({ type: "SIMULATE" })}
               onExploreMissions={() => actor.send({ type: "EXPLORE_MISSIONS" })}
+              onControls={() => setShowControls(true)}
             />
           )}
 

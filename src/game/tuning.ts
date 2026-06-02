@@ -18,8 +18,8 @@ export const tuning = {
   gravity: MOON_GRAVITY,
   mainEngineForce: 45000,
   sideEngineTorque: 42000,
-  fuelBurnMain: 2,
-  fuelBurnSide: 1,
+  fuelBurnMain: 8,
+  fuelBurnSide: 2,
 
   // Mission / landing
   startAltitude: 150,
@@ -27,16 +27,16 @@ export const tuning = {
   maxLandingAngle: MAX_LANDING_ANGLE,
 
   // Rover
-  roverAccel: 32,
-  roverMaxSpeed: 28,
+  roverAccel: 24,
+  roverMaxSpeed: 20,
   roverAirTorque: 140,
-  roverDownforce: 120,
+  roverDownforce: 700,
   roverBoostForce: 620,
   roverWheelSpinSpeed: 14,
-  roverSuspensionLength: 1.2,
-  roverSuspensionSpring: 14000,
-  roverSuspensionDamping: 2400,
-  roverSuspensionMaxForce: 6000,
+  roverSuspensionLength: 1.35,
+  roverSuspensionSpring: 6500,
+  roverSuspensionDamping: 5200,
+  roverSuspensionMaxForce: 3500,
 
   // Misc
   starterLaunchForce: 120000,

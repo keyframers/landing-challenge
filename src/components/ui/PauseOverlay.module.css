@@ -38,7 +38,8 @@
   background: transparent;
   cursor: pointer;
   border-radius: 2px;
-  min-width: 240px;
+  width: 280px;
+  max-width: calc(100vw - 3rem);
 }
 
 .primaryButton {

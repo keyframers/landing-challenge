@@ -221,6 +221,10 @@ export const gameMachine = setup({
           on: {
             RETRY: 'descending',
             SIMULATE: 'simulatingLanding',
+            EXPLORE_MISSIONS: {
+              target: '#lunarLander.manual',
+              actions: 'resetManualBrowse',
+            },
           },
         },
 
@@ -228,6 +232,10 @@ export const gameMachine = setup({
           on: {
             RETRY: 'descending',
             SIMULATE: 'simulatingLanding',
+            EXPLORE_MISSIONS: {
+              target: '#lunarLander.manual',
+              actions: 'resetManualBrowse',
+            },
           },
         },
 

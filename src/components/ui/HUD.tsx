@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
 import styles from "./HUD.module.css";
 import Button from "./Button";
 
@@ -55,9 +57,7 @@ export default function HUD({
         </div>
         <ThrustGauge level={thrustLevel} />
         <div className={`${styles.panelLabel} ${styles.fuelLabel}`}>Fuel</div>
-        <div
-          className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}
-        >
+        <div className={`${styles.fuelValue} ${fuel < 20 ? styles.low : styles.normal}`}>
           {Math.round(fuel)}%
         </div>
       </div>
@@ -88,15 +88,46 @@ export default function HUD({
 
 function ThrustGauge({ level }: { level: number }) {
   const bars = 10;
+  const barRefs = useRef<HTMLDivElement[]>([]);
+  // single animated "needle" value (0..1) that the bars are derived from
+  const needle = useRef({ v: 0 });
+
+  useEffect(() => {
+    const colorAt = gsap.utils.interpolate(
+      "rgba(255,255,255,0.08)",
+      "#ffcc00",
+    );
+    const obj = needle.current;
+    gsap.to(obj, {
+      v: level,
+      duration: 0.6,
+      ease: "expo.out",
+      overwrite: true,
+      onUpdate: () => {
+        const v = obj.v;
+        barRefs.current.forEach((bar, i) => {
+          // bars[0] = top ... bars[last] = bottom; each bar owns a 1/bars slice
+          const low = (bars - i - 1) / bars;
+          const fill = Math.min(1, Math.max(0, (v - low) * bars));
+          gsap.set(bar, {
+            backgroundColor: colorAt(fill),
+            opacity: 0.45 + 0.55 * fill,
+          });
+        });
+      },
+    });
+  }, [level]);
+
   return (
     <div className={styles.thrustGauge}>
       {Array.from({ length: bars }).map((_, i) => {
-        const barLevel = (bars - i) / bars;
-        const active = level >= barLevel;
         return (
           <div
             key={i}
-            className={`${styles.thrustBar} ${active ? styles.active : styles.inactive}`}
+            ref={(el) => {
+              if (el) barRefs.current[i] = el;
+            }}
+            className={styles.thrustBar}
           />
         );
       })}

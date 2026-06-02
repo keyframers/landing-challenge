@@ -24,8 +24,8 @@ export function GameApp() {
       max: 100000,
       step: 100,
     },
-    fuelBurnMain: { value: tuning.fuelBurnMain, min: 0, max: 10, step: 0.1 },
-    fuelBurnSide: { value: tuning.fuelBurnSide, min: 0, max: 10, step: 0.1 },
+    fuelBurnMain: { value: tuning.fuelBurnMain, min: 0, max: 50, step: 0.5 },
+    fuelBurnSide: { value: tuning.fuelBurnSide, min: 0, max: 20, step: 0.25 },
     startAltitude: { value: tuning.startAltitude, min: 20, max: 400, step: 1 },
     maxLandingSpeed: {
       value: tuning.maxLandingSpeed,

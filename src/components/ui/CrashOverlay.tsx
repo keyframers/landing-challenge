@@ -7,12 +7,16 @@ interface CrashOverlayProps {
   type: "crashed" | "missed";
   onRetry: () => void;
   onSimulate: () => void;
+  onExplore: () => void;
+  onControls: () => void;
 }
 
 export default function CrashOverlay({
   type,
   onRetry,
   onSimulate,
+  onExplore,
+  onControls,
 }: CrashOverlayProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -35,14 +39,18 @@ export default function CrashOverlay({
   return (
     <div className={styles.overlay}>
       <div ref={ref} className={styles.content}>
-        <div className={`${styles.title} ${styles[type]}`}>{title}</div>
+        <div className={styles.title}>{title}</div>
         <p className={styles.subtitle}>{subtitle}</p>
         <div className={styles.buttonGroup}>
-          <Button onClick={onRetry} className={styles.primaryButton}>
-            Try Again
-          </Button>
-          <Button onClick={onSimulate} className={styles.secondaryButton}>
+          <Button onClick={onRetry}>Try Again</Button>
+          <Button onClick={onSimulate} subtle>
             Simulate Landing
+          </Button>
+          <Button onClick={onExplore} subtle>
+            Explore Missions
+          </Button>
+          <Button onClick={onControls} subtle>
+            Controls
           </Button>
         </div>
       </div>
