@@ -30,9 +30,10 @@
 }
 
 .missionLabel {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   letter-spacing: 0.15em;
   color: #aaa;
+  text-transform: uppercase;
 }
 
 .pauseButton {
@@ -55,7 +56,7 @@
 }
 
 .panelLabel {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   letter-spacing: 0.15em;
   color: #888;
   text-transform: uppercase;
@@ -70,8 +71,10 @@
 }
 
 .fuelValue {
-  font-size: 1.2rem;
+  font-size: 1.7rem;
   font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .fuelValue.normal {
@@ -97,15 +100,16 @@
 }
 
 .telemetryLabel {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   letter-spacing: 0.15em;
   color: #666;
   text-transform: uppercase;
 }
 
 .telemetryValue {
-  font-size: 1.4rem;
+  font-size: 1.9rem;
   font-weight: 300;
+  line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
 
@@ -126,18 +130,19 @@
 }
 
 .statusLabel {
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
   color: #666;
   text-transform: uppercase;
 }
 
 .statusValue {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #f4f4f5;
   font-weight: 300;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.15em;
+  line-height: 1.1;
 }
 
 .thrustGauge {

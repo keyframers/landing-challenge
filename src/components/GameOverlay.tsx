@@ -148,6 +148,7 @@ export default function GameOverlay({
           {state.matches({ playing: 'paused' }) && (
             <PauseOverlay
               onResume={() => actor.send({ type: 'RESUME' })}
+              onRestart={() => actor.send({ type: 'RESTART_MISSION' })}
               onSimulate={() => actor.send({ type: 'SIMULATE' })}
               onExploreMissions={() => actor.send({ type: 'EXPLORE_MISSIONS' })}
               onControls={() => setShowControls(true)}

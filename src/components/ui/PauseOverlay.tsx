@@ -3,6 +3,7 @@ import Button from "./Button";
 
 interface PauseOverlayProps {
   onResume: () => void;
+  onRestart: () => void;
   onSimulate: () => void;
   onExploreMissions: () => void;
   onControls: () => void;
@@ -10,6 +11,7 @@ interface PauseOverlayProps {
 
 export default function PauseOverlay({
   onResume,
+  onRestart,
   onSimulate,
   onExploreMissions,
   onControls,
@@ -20,6 +22,9 @@ export default function PauseOverlay({
         <div className={styles.title}>Paused</div>
         <div className={styles.buttonGroup}>
           <Button onClick={onResume}>Resume</Button>
+          <Button onClick={onRestart} subtle>
+            Restart
+          </Button>
           <Button onClick={onSimulate} subtle>
             Simulate Landing
           </Button>
