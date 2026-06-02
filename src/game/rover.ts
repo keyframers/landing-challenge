@@ -11,6 +11,7 @@ import { applyThrust } from './physics';
 import type { InputState } from './input';
 
 export const ROVER_WHEEL_OFFSETS = [-1.1, 0, 1.1];
+const WIREFRAME_COLOR = 0xffffff;
 
 export interface Rover {
   container: Container;
@@ -27,42 +28,61 @@ export interface Rover {
 
 export function createRoverGraphics(): Container {
   const container = new Container();
+  drawRoverGraphics(container);
+  return container;
+}
+
+export function drawRoverGraphics(container: Container) {
+  container.removeChildren();
   const ppm = PIXELS_PER_METER;
   const hw = (ROVER_WIDTH / 2) * ppm;
   const hh = (ROVER_HEIGHT / 2) * ppm;
   const wheelR = hh * 0.45;
   const wheelY = hh * 0.85;
+  const wireframe = tuning.wireframe;
+
+  function finish(g: Graphics, color: number) {
+    if (wireframe) {
+      g.stroke({ color: WIREFRAME_COLOR, width: 2 });
+    } else {
+      g.fill({ color });
+    }
+  }
 
   const chassis = new Graphics();
   chassis.roundRect(-hw, -hh, hw * 2, hh * 1.3, 3);
-  chassis.fill({ color: 0xaaaaaa });
+  finish(chassis, 0xaaaaaa);
   container.addChild(chassis);
 
   const equip = new Graphics();
   equip.roundRect(-hw * 0.4, -hh * 1.6, hw * 0.3, hh * 0.8, 2);
-  equip.fill({ color: 0x999999 });
+  finish(equip, 0x999999);
   equip.roundRect(hw * 0.1, -hh * 1.4, hw * 0.5, hh * 0.6, 2);
-  equip.fill({ color: 0x888888 });
+  finish(equip, 0x888888);
   container.addChild(equip);
 
   const antenna = new Graphics();
   antenna.moveTo(-hw * 0.2, -hh * 1.6);
   antenna.lineTo(-hw * 0.3, -hh * 2.5);
-  antenna.stroke({ color: 0xcccccc, width: 1 });
+  antenna.stroke({ color: wireframe ? WIREFRAME_COLOR : 0xcccccc, width: 1 });
   antenna.circle(-hw * 0.3, -hh * 2.5, 8);
-  antenna.fill({ color: 0xdddddd, alpha: 0.8 });
+  if (wireframe) {
+    antenna.stroke({ color: WIREFRAME_COLOR, width: 1, alpha: 0.8 });
+  } else {
+    antenna.fill({ color: 0xdddddd, alpha: 0.8 });
+  }
   container.addChild(antenna);
 
   for (let i = 0; i < ROVER_WHEEL_OFFSETS.length; i++) {
     const wheel = new Graphics();
     wheel.circle(0, 0, wheelR);
-    wheel.stroke({ color: 0x666666, width: 2 });
+    wheel.stroke({ color: wireframe ? WIREFRAME_COLOR : 0x666666, width: 2 });
     wheel.moveTo(-wheelR, 0);
     wheel.lineTo(wheelR, 0);
-    wheel.stroke({ color: 0x666666, width: 1 });
+    wheel.stroke({ color: wireframe ? WIREFRAME_COLOR : 0x666666, width: 1 });
     wheel.moveTo(0, -wheelR);
     wheel.lineTo(0, wheelR);
-    wheel.stroke({ color: 0x666666, width: 1 });
+    wheel.stroke({ color: wireframe ? WIREFRAME_COLOR : 0x666666, width: 1 });
     wheel.x = ROVER_WHEEL_OFFSETS[i] * ppm;
     wheel.y = wheelY;
     wheel.label = `wheel${i}`;
@@ -71,12 +91,14 @@ export function createRoverGraphics(): Container {
 
   const debugCollider = new Graphics();
   debugCollider.rect(-hw, -hh, hw * 2, hh * 2);
-  debugCollider.stroke({ color: 0xff3355, width: 2, alpha: 0.9 });
+  debugCollider.stroke({
+    color: wireframe ? WIREFRAME_COLOR : 0xff3355,
+    width: 2,
+    alpha: 0.9,
+  });
   debugCollider.label = 'debugColliderBounds';
   debugCollider.visible = false;
   container.addChild(debugCollider);
-
-  return container;
 }
 
 export function createRover(body: RoverBody): Rover {

@@ -12,7 +12,11 @@ import {
   replaceVehicleCollider,
   type LanderBody,
 } from './physics';
-import { createTerrainSystem, getTerrainHeightAt } from './terrain';
+import {
+  createTerrainSystem,
+  getTerrainHeightAt,
+  redrawTerrainSystem,
+} from './terrain';
 import {
   createCamera,
   frameCamera,
@@ -21,6 +25,7 @@ import {
 } from './camera';
 import {
   createLanderGraphics,
+  drawLanderGraphics,
   updateLanderPhysics,
   emitLanderParticles,
   checkLanding,
@@ -28,6 +33,7 @@ import {
 } from './lander';
 import {
   createRoverGraphics,
+  drawRoverGraphics,
   ROVER_WHEEL_OFFSETS,
   syncRoverGraphics,
   updateRoverPhysics,
@@ -55,6 +61,34 @@ export interface Game {
 }
 
 type VehicleMode = 'lander' | 'rover';
+type BrowserInspector = ReturnType<typeof createBrowserInspector>;
+type InspectWindow = Window & { __xstateInspector?: BrowserInspector };
+
+function getInspector(): BrowserInspector | undefined {
+  const inspectWindow = window as InspectWindow;
+  const params = new URLSearchParams(window.location.search);
+  const enabled =
+    params.has('inspect') ||
+    window.localStorage.getItem('xstate.inspect') === '1';
+
+  if (!enabled) return undefined;
+
+  inspectWindow.__xstateInspector ??= createBrowserInspector({
+    filter: (event) => {
+      if (event.type === '@xstate.event') {
+        return event.event.type !== 'UPDATE_TELEMETRY';
+      }
+      if (event.type === '@xstate.snapshot') {
+        return event.event.type !== 'UPDATE_TELEMETRY';
+      }
+      return true;
+    },
+    maxDeferredEvents: 50,
+    url: 'https://editor.stately.ai',
+  });
+
+  return inspectWindow.__xstateInspector;
+}
 
 /**
  * A single persistent entity. Switching between lander and rover only changes
@@ -96,26 +130,18 @@ export async function createGame(
   await app.init({
     canvas,
     resizeTo: window,
-    backgroundColor: 0x0a0a14,
+    backgroundColor: tuning.wireframe ? 0x000000 : 0x0a0a14,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
   });
   onProgress?.(0.6);
 
-  const inspector = createBrowserInspector({
-    filter: (event) => {
-      if (event.type === '@xstate.event') {
-        return event.event.type !== 'UPDATE_TELEMETRY';
-      }
-      if (event.type === '@xstate.snapshot') {
-        return event.event.type !== 'UPDATE_TELEMETRY';
-      }
-      return true;
-    },
-    url: 'https://editor.stately.ai',
-  });
-  const actor = createActor(gameMachine, { inspect: inspector.inspect });
+  const inspector = getInspector();
+  const actor = createActor(
+    gameMachine,
+    inspector ? { inspect: inspector.inspect } : undefined,
+  );
   const input = new InputManager();
 
   const worldContainer = new Container();
@@ -146,6 +172,23 @@ export async function createGame(
   }
   uiWorldContainer.addChild(terrain.landingZoneMarkers);
 
+  let vehicle: Vehicle | null = null;
+  let lastWireframe = tuning.wireframe;
+
+  function applyRenderMode(force = false) {
+    if (!force && lastWireframe === tuning.wireframe) return;
+    lastWireframe = tuning.wireframe;
+
+    starContainer.visible = !tuning.wireframe;
+    app.renderer.background.color = tuning.wireframe ? 0x000000 : 0x0a0a14;
+    redrawTerrainSystem(terrain);
+
+    if (vehicle) {
+      drawLanderGraphics(vehicle.landerGfx);
+      drawRoverGraphics(vehicle.roverGfx);
+    }
+  }
+
   const world: RAPIER.World = createWorld();
   createTerrainCollider(world, terrain.surfaceHeights);
 
@@ -153,8 +196,8 @@ export async function createGame(
   const particles = new ParticleSystem();
   particleContainer.addChild(particles.container);
 
-  let vehicle: Vehicle | null = null;
   let accumulator = 0;
+  applyRenderMode(true);
 
   interface TransitState {
     toX: number;
@@ -318,7 +361,9 @@ export async function createGame(
       const debugBounds = container.children.find(
         (c) => c.label === 'debugColliderBounds',
       );
-      if (debugBounds) debugBounds.visible = tuning.showDebugBounds;
+      if (debugBounds) {
+        debugBounds.visible = tuning.wireframe || tuning.showDebugBounds;
+      }
     }
 
     if (vehicle.mode === 'lander') {
@@ -670,6 +715,8 @@ export async function createGame(
   }
 
   app.ticker.add((ticker) => {
+    applyRenderMode();
+
     const state = actor.getSnapshot();
     // Clamp delta so a long stall (e.g. backgrounded tab) can't spiral physics.
     const delta = Math.min(ticker.deltaMS / 1000, 0.05);
@@ -793,7 +840,11 @@ export async function createGame(
       transit = null;
       simulatedLanding = null;
       particles.destroy();
-      app.destroy(true);
+      app.ticker.stop();
+      app.destroy(
+        { removeView: false },
+        { children: true, texture: false, textureSource: false, context: false },
+      );
     },
   };
 }

@@ -43,6 +43,7 @@ export const tuning = {
   transitHandOffDistance: 120,
   transitHandOffVerticalSpeed: 14,
   transitMaxSeconds: 20,
+  wireframe: true,
   showDebugBounds: false,
 };
 

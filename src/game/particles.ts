@@ -1,6 +1,9 @@
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
 import { PIXELS_PER_METER } from './constants';
+import { tuning } from './tuning';
+
+const WIREFRAME_COLOR = 0xffffff;
 
 interface Particle {
   graphic: Graphics;
@@ -28,7 +31,11 @@ export class ParticleSystem {
       const g = new Graphics();
       const size = 2 + Math.random() * 4;
       g.circle(0, 0, size);
-      g.fill({ color: this.thrustColor(), alpha: 0.9 });
+      if (tuning.wireframe) {
+        g.stroke({ color: WIREFRAME_COLOR, width: 1, alpha: 0.9 });
+      } else {
+        g.fill({ color: this.thrustColor(), alpha: 0.9 });
+      }
 
       g.x = worldX * ppm;
       g.y = worldY * ppm;
@@ -67,7 +74,11 @@ export class ParticleSystem {
       const size = 3 + Math.random() * 6;
       const color = Math.random() > 0.5 ? 0xff6600 : 0xffaa00;
       g.circle(0, 0, size);
-      g.fill({ color, alpha: 1 });
+      if (tuning.wireframe) {
+        g.stroke({ color: WIREFRAME_COLOR, width: 1, alpha: 1 });
+      } else {
+        g.fill({ color, alpha: 1 });
+      }
 
       g.x = worldX * ppm;
       g.y = worldY * ppm;
@@ -104,7 +115,11 @@ export class ParticleSystem {
       const g = new Graphics();
       const size = 4 + Math.random() * 8;
       g.circle(0, 0, size);
-      g.fill({ color: 0x888888, alpha: 0.5 });
+      if (tuning.wireframe) {
+        g.stroke({ color: WIREFRAME_COLOR, width: 1, alpha: 0.6 });
+      } else {
+        g.fill({ color: 0x888888, alpha: 0.5 });
+      }
 
       g.x = worldX * ppm;
       g.y = worldY * ppm;
@@ -142,6 +157,7 @@ export class ParticleSystem {
       p.graphic.destroy();
     }
     this.particles = [];
+    this.container.parent?.removeChild(this.container);
     this.container.destroy();
   }
 }

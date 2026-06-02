@@ -8,6 +8,9 @@ import {
   PIXELS_PER_METER,
 } from './constants';
 import { missions } from '../data/missions';
+import { tuning } from './tuning';
+
+const WIREFRAME_COLOR = 0xffffff;
 
 export interface TerrainLayer {
   container: Container;
@@ -227,15 +230,20 @@ export function createTerrainGraphics(
 ): Graphics {
   const g = new Graphics();
   const ppm = PIXELS_PER_METER;
+  const wireframe = tuning.wireframe;
 
   g.moveTo(0, heights[0] * ppm);
   for (let i = 1; i < heights.length; i++) {
     g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
   }
-  g.lineTo((heights.length - 1) * TERRAIN_SEGMENT_SIZE * ppm, 1000 * ppm);
-  g.lineTo(0, 1000 * ppm);
-  g.closePath();
-  g.fill({ color, alpha });
+  if (wireframe) {
+    g.stroke({ color: WIREFRAME_COLOR, width: 2, alpha: 0.9 });
+  } else {
+    g.lineTo((heights.length - 1) * TERRAIN_SEGMENT_SIZE * ppm, 1000 * ppm);
+    g.lineTo(0, 1000 * ppm);
+    g.closePath();
+    g.fill({ color, alpha });
+  }
 
   return g;
 }
@@ -245,14 +253,21 @@ export function createLandingZoneMarker(zone: LandingZone): Graphics {
   const ppm = PIXELS_PER_METER;
   const x = zone.x * ppm;
   const w = zone.width * ppm;
+  const color = tuning.wireframe ? WIREFRAME_COLOR : 0xffcc00;
 
   g.rect(x, -4, w, 4);
-  g.fill({ color: 0xffcc00, alpha: 0.8 });
+  if (tuning.wireframe) {
+    g.stroke({ color, width: 2, alpha: 0.9 });
+  } else {
+    g.fill({ color, alpha: 0.8 });
+  }
 
   g.rect(x, -4, 2, 8);
-  g.fill({ color: 0xffcc00 });
+  if (tuning.wireframe) g.stroke({ color, width: 2 });
+  else g.fill({ color });
   g.rect(x + w - 2, -4, 2, 8);
-  g.fill({ color: 0xffcc00 });
+  if (tuning.wireframe) g.stroke({ color, width: 2 });
+  else g.fill({ color });
 
   return g;
 }
@@ -264,6 +279,33 @@ export interface TerrainSystem {
   landingZones: LandingZone[];
   layers: TerrainLayer[];
   landingZoneMarkers: Container;
+}
+
+export function redrawTerrainSystem(terrain: TerrainSystem) {
+  const [bgLayer, midLayer, fgLayer] = terrain.layers;
+  bgLayer.container.removeChildren();
+  bgLayer.container.addChild(
+    createTerrainGraphics(terrain.layers[0].heights, 0x171726, 0.55),
+  );
+  midLayer.container.removeChildren();
+  midLayer.container.addChild(
+    createTerrainGraphics(terrain.middleHeights, 0x252536, 0.85),
+  );
+  fgLayer.container.removeChildren();
+  fgLayer.container.addChild(
+    createTerrainGraphics(terrain.foregroundHeights, 0x3a3a4a, 1.0),
+  );
+
+  terrain.landingZoneMarkers.removeChildren();
+  for (const zone of terrain.landingZones) {
+    const marker = createLandingZoneMarker(zone);
+    const heightIdx = Math.floor(zone.x / TERRAIN_SEGMENT_SIZE);
+    const zoneY =
+      (terrain.foregroundHeights[heightIdx] ?? TERRAIN_BASE_HEIGHT) *
+      PIXELS_PER_METER;
+    marker.y = zoneY;
+    terrain.landingZoneMarkers.addChild(marker);
+  }
 }
 
 export function createTerrainSystem(): TerrainSystem {
