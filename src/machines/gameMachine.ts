@@ -16,6 +16,7 @@ export interface GameContext {
   browsePosition: number;
   manualMissionInView: boolean;
   restartRequested: boolean;
+  controlsOpen: boolean;
 }
 
 export type GameEvent =
@@ -24,6 +25,8 @@ export type GameEvent =
   | { type: "BROWSE" }
   | { type: "INFO" }
   | { type: "CLOSE" }
+  | { type: "SHOW_CONTROLS" }
+  | { type: "CLOSE_CONTROLS" }
   | { type: "LANDED"; missionIndex?: number }
   | { type: "CRASHED" }
   | { type: "MISSED" }
@@ -38,6 +41,8 @@ export type GameEvent =
   | { type: "RESUME" }
   | { type: "EXPLORE_MISSIONS" }
   | { type: "SCROLL"; position: number }
+  | { type: "BROWSE_PREV" }
+  | { type: "BROWSE_NEXT" }
   | { type: "SET_MANUAL_MISSION"; missionIndex: number | null }
   | { type: "JUMP_TO_MISSION"; missionIndex: number }
   | { type: "CONTROLS_PRESSED" }
@@ -61,6 +66,8 @@ export const gameMachine = setup({
     resetFuel: assign({ fuel: (_) => MAX_FUEL }),
     markRestartRequested: assign({ restartRequested: true }),
     clearRestartRequested: assign({ restartRequested: false }),
+    showControls: assign({ controlsOpen: true }),
+    closeControls: assign({ controlsOpen: false }),
     completeMission: assign({
       completedMissions: ({ context, event }) => {
         const missionIndex =
@@ -94,6 +101,18 @@ export const gameMachine = setup({
       browsePosition: ({ event, context }) => {
         if (event.type !== "SCROLL") return context.browsePosition;
         return Math.max(0, Math.min(1, event.position));
+      },
+    }),
+    browsePrev: assign({
+      browsePosition: ({ context }) => {
+        const step = 1 / Math.max(1, missions.length - 1);
+        return Math.max(0, context.browsePosition - step);
+      },
+    }),
+    browseNext: assign({
+      browsePosition: ({ context }) => {
+        const step = 1 / Math.max(1, missions.length - 1);
+        return Math.min(1, context.browsePosition + step);
       },
     }),
     setManualMission: assign({
@@ -160,10 +179,13 @@ export const gameMachine = setup({
     browsePosition: 0,
     manualMissionInView: true,
     restartRequested: false,
+    controlsOpen: false,
   },
   on: {
     UPDATE_TELEMETRY: { actions: "updateTelemetry" },
     RESTARTED: { actions: "clearRestartRequested" },
+    SHOW_CONTROLS: { actions: "showControls" },
+    CLOSE_CONTROLS: { actions: "closeControls" },
   },
   states: {
     loading: {
@@ -305,6 +327,12 @@ export const gameMachine = setup({
       on: {
         SCROLL: {
           actions: "setBrowsePosition",
+        },
+        BROWSE_PREV: {
+          actions: "browsePrev",
+        },
+        BROWSE_NEXT: {
+          actions: "browseNext",
         },
         SET_MANUAL_MISSION: {
           actions: "setManualMission",

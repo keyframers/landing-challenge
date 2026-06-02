@@ -22,6 +22,17 @@ export default function InfoDialog({ onClose }: InfoDialogProps) {
     });
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div ref={ref} onClick={(e) => e.stopPropagation()} className={styles.content}>
@@ -37,7 +48,7 @@ export default function InfoDialog({ onClose }: InfoDialogProps) {
           angle — too fast or too tilted and you'll crash. Each mission takes you to a new Apollo
           landing site.
         </p>
-        <Button onClick={onClose} className={styles.closeButton}>
+        <Button onClick={onClose} className={styles.closeButton} data-primary="true">
           Got it
         </Button>
       </div>

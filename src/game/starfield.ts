@@ -188,8 +188,8 @@ export function createEarth(): Container {
 
   const earth = new Sprite(earthTexture ?? Texture.WHITE);
   earth.anchor.set(0.5);
-  earth.width = 46;
-  earth.height = 46;
+  earth.width = 58;
+  earth.height = 58;
   container.addChild(earth);
 
   return container;

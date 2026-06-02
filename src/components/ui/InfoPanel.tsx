@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import gsap from "gsap";
 import type { MissionData } from "../../data/missions";
 import styles from "./InfoPanel.module.css";
@@ -93,16 +93,6 @@ export default function InfoPanel({
     { scope: panelRef }
   );
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Enter" || e.code === "KeyA") {
-        onContinue();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onContinue]);
-
   return (
     <div ref={panelRef} className={styles.panel}>
       <div className={styles.panelBackground} />
@@ -134,7 +124,11 @@ export default function InfoPanel({
                 Explore
               </Button>
             )}
-            <Button onClick={onContinue} className={styles.continueButton}>
+            <Button
+              onClick={onContinue}
+              className={styles.continueButton}
+              data-primary="true"
+            >
               Continue →
             </Button>
           </div>

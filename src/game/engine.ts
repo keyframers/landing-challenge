@@ -388,9 +388,7 @@ export async function createGame(
 
   /**
    * Drop the rover onto the terrain directly below wherever the lander was,
-   * sitting flat against the slope (chassis rotated to match) at the
-   * suspension's rest ride height with zero velocity — so it settles in place
-   * instead of dropping in and bouncing.
+   * sitting on the heightmap at one rolling radius with zero velocity.
    */
   function placeRoverOnTerrain() {
     if (!vehicle) return;
@@ -402,23 +400,13 @@ export async function createGame(
     const rightH = getTerrainHeightAt(heights, x + 2);
     const slope = Math.atan2(rightH - leftH, 4);
 
-    // Resting suspension compression under the rover's own weight, so the
-    // wheels spawn already loaded and the chassis doesn't drop.
-    const mass = body.mass();
-    const restCompression = Math.min(
-      tuning.roverSuspensionLength,
-      (mass * Math.abs(tuning.gravity)) / 2 / tuning.roverSuspensionSpring,
-    );
-    const rideHeight =
-      ROVER_HEIGHT * 0.2 + (tuning.roverSuspensionLength - restCompression);
-
-    // Offset the chassis centre along the surface normal (chassis "up").
+    const radius = ROVER_HEIGHT * 0.5;
     const upX = Math.sin(slope);
     const upY = -Math.cos(slope);
 
     body.setRotation(slope, true);
     body.setTranslation(
-      { x: x + upX * rideHeight, y: surfaceY + upY * rideHeight },
+      { x: x + upX * radius, y: surfaceY + upY * radius },
       true,
     );
     body.setLinvel({ x: 0, y: 0 }, true);
@@ -754,14 +742,12 @@ export async function createGame(
   });
 
   input.setAnyControlCallback(() => {
-    const state = actor.getSnapshot();
-    if (state.matches('manual')) {
-      actor.send({ type: 'CONTROLS_PRESSED' });
-    }
+    // Manual mode uses arrow keys for browsing; explicit buttons enter gameplay.
   });
 
   input.setEscapeCallback(() => {
     const state = actor.getSnapshot();
+    if (state.context.controlsOpen) return;
     if (state.matches({ playing: 'paused' })) {
       actor.send({ type: 'RESUME' });
     } else if (
@@ -904,7 +890,7 @@ export async function createGame(
           vehicle as unknown as Rover,
           input.state,
           FIXED_TIMESTEP,
-          world,
+          terrain.surfaceHeights,
         );
         world.step();
         accumulator -= FIXED_TIMESTEP;

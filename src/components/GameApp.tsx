@@ -49,6 +49,18 @@ export function GameApp() {
     roverGrip: { value: tuning.roverGrip, min: 0, max: 40, step: 0.5 },
     roverAirTorque: { value: tuning.roverAirTorque, min: 0, max: 3000, step: 10 },
     roverDownforce: { value: tuning.roverDownforce, min: 0, max: 3000, step: 10 },
+    roverBoostForce: {
+      value: tuning.roverBoostForce,
+      min: 0,
+      max: 25000,
+      step: 100,
+    },
+    roverBoostFuelBurn: {
+      value: tuning.roverBoostFuelBurn,
+      min: 0,
+      max: 20,
+      step: 0.25,
+    },
     roverWheelSpinSpeed: {
       value: tuning.roverWheelSpinSpeed,
       min: 0,

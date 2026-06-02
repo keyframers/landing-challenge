@@ -14,8 +14,8 @@ export class InputManager {
   private onEscape: (() => void) | null = null;
 
   constructor() {
-    window.addEventListener("keydown", this.handleKeyDown);
-    window.addEventListener("keyup", this.handleKeyUp);
+    window.addEventListener("keydown", this.handleKeyDown, { capture: true });
+    window.addEventListener("keyup", this.handleKeyUp, { capture: true });
   }
 
   setKonamiCallback(cb: () => void) {
@@ -36,6 +36,9 @@ export class InputManager {
       return;
     }
     this.mapKey(e.code, true);
+    if (this.state.left || this.state.right || this.state.up) {
+      e.preventDefault();
+    }
     this.checkKonami(e.code);
     if (this.state.left || this.state.right || this.state.up) {
       this.onAnyControl?.();
@@ -44,19 +47,29 @@ export class InputManager {
 
   private handleKeyUp = (e: KeyboardEvent) => {
     this.mapKey(e.code, false);
+    if (
+      ["ArrowLeft", "ArrowRight", "ArrowUp", "KeyA", "KeyD", "KeyW", "Space"].includes(
+        e.code,
+      )
+    ) {
+      e.preventDefault();
+    }
   };
 
   private mapKey(code: string, pressed: boolean) {
     const value = pressed ? 1 : 0;
     switch (code) {
       case "ArrowLeft":
+      case "KeyA":
         this.state.left = value;
         break;
       case "ArrowRight":
+      case "KeyD":
         this.state.right = value;
         break;
       case "ArrowUp":
-      case "KeyA":
+      case "KeyW":
+      case "Space":
         this.state.up = value;
         break;
     }
@@ -91,7 +104,7 @@ export class InputManager {
   }
 
   destroy() {
-    window.removeEventListener("keydown", this.handleKeyDown);
-    window.removeEventListener("keyup", this.handleKeyUp);
+    window.removeEventListener("keydown", this.handleKeyDown, { capture: true });
+    window.removeEventListener("keyup", this.handleKeyUp, { capture: true });
   }
 }

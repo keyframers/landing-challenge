@@ -28,11 +28,13 @@ export const tuning = {
 
   // Rover — forces in newtons (rover mass ~210kg), except *Speed (m/s) and
   // roverGrip (m/s^2 of braking). See updateRoverPhysics for the model.
-  roverAccel: 1700,
-  roverMaxSpeed: 22,
+  roverAccel: 4200,
+  roverMaxSpeed: 34,
   roverGrip: 9,
   roverAirTorque: 700,
   roverDownforce: 600,
+  roverBoostForce: 18000,
+  roverBoostFuelBurn: 3.5,
   roverWheelSpinSpeed: 14,
   roverSuspensionLength: 1.4,
   roverSuspensionSpring: 3000,

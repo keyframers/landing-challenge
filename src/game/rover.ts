@@ -1,19 +1,19 @@
 import { Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
-import type RAPIER from '@dimforge/rapier2d-compat';
 import roverSvgUrl from '../data/Rover.svg?url';
 import {
+  LUNAR_ROVER_MASS,
   ROVER_WIDTH,
   ROVER_HEIGHT,
   PIXELS_PER_METER,
 } from './constants';
 import { tuning } from './tuning';
-import { rapier, type RoverBody } from './physics';
+import { type RoverBody } from './physics';
 import type { InputState } from './input';
+import { getTerrainHeightAt } from './terrain';
 
 export const ROVER_WHEEL_OFFSETS = [-0.95, 0.95];
 const WIREFRAME_COLOR = 0xffffff;
 const ROVER_SVG_ASPECT = 600 / 347;
-const WHEEL_MOUNT_Y = ROVER_HEIGHT * 0.2;
 let roverTexture: Texture | null = null;
 
 export async function loadRoverGraphics() {
@@ -23,6 +23,7 @@ export async function loadRoverGraphics() {
 export interface Rover {
   container: Container;
   body: RoverBody;
+  fuel?: number;
   wheelRotation: number;
   wheelDriveInput: number;
   wheelTravel: number[];
@@ -78,192 +79,102 @@ export function createRover(body: RoverBody): Rover {
   };
 }
 
-function localPoint(body: RAPIER.RigidBody, x: number, y: number) {
-  const pos = body.translation();
-  const rot = body.rotation();
-  const cos = Math.cos(rot);
-  const sin = Math.sin(rot);
-  return {
-    x: pos.x + cos * x - sin * y,
-    y: pos.y + sin * x + cos * y,
-  };
-}
-
-function localVector(body: RAPIER.RigidBody, x: number, y: number) {
-  const rot = body.rotation();
-  const cos = Math.cos(rot);
-  const sin = Math.sin(rot);
-  return {
-    x: cos * x - sin * y,
-    y: sin * x + cos * y,
-  };
-}
-
 /**
- * Heavy ground-vehicle model — no thrusters. The chassis is a single rigid body
- * carried by two raycast "wheels" (a spring-damper strut each), so it follows
- * terrain and can launch off ramps when it's moving fast enough on its own
- * momentum. Left/right drive a motor whose pull tapers off near top speed; with
- * no input the wheels grip the slope (engine braking) so it holds still on
- * inclines. While airborne, left/right pitch the chassis for a clean landing.
- *
- * All tuning values below are forces in newtons (impulse = force * dt), except
- * the m/s "speed" cap and `roverGrip` (m/s^2 of braking deceleration).
+ * Treat the rover as one rolling ball over the terrain heightmap. Rapier still
+ * owns the shared body, but terrain contact is resolved from surfaceHeights so
+ * wheel contacts cannot fight each other over jagged ground.
  */
 export function updateRoverPhysics(
   rover: Rover,
   input: InputState,
   dt: number,
-  world: RAPIER.World,
+  terrainHeights: number[],
 ) {
   const body = rover.body.rigidBody;
-  const mass = body.mass();
   const driveInput = input.right - input.left;
-
-  rover.roverBoosting = false;
-  rover.isGrounded = false;
-
-  let tangentX = 0;
-  let tangentY = 0;
-  let normalX = 0;
-  let normalY = 0;
-  let contactX = 0;
-  let contactY = 0;
-  let contacts = 0;
-  let nearestGround = Infinity;
-
-  for (let i = 0; i < ROVER_WHEEL_OFFSETS.length; i++) {
-    const mount = localPoint(body, ROVER_WHEEL_OFFSETS[i], WHEEL_MOUNT_Y);
-    const down = localVector(body, 0, 1);
-    const ray = new rapier.Ray(mount, down);
-    const hit = world.castRayAndGetNormal(
-      ray,
-      tuning.roverSuspensionLength,
-      true,
-      undefined,
-      undefined,
-      rover.body.collider,
-    );
-
-    if (!hit) {
-      rover.wheelTravel[i] = tuning.roverSuspensionLength;
-      continue;
-    }
-
-    const hitPoint = ray.pointAt(hit.timeOfImpact);
-    const compression = tuning.roverSuspensionLength - hit.timeOfImpact;
-    const wheelVelocity = body.velocityAtPoint(hitPoint);
-    // Compression speed along the wheel ray — positive while the strut is
-    // compressing (chassis moving down toward the ground). Damping must OPPOSE
-    // that motion, so it ADDS to the upward force here (a minus sign would be
-    // anti-damping and make the suspension oscillate forever).
-    const compressionSpeed =
-      wheelVelocity.x * down.x + wheelVelocity.y * down.y;
-    const suspensionForce = Math.max(
-      0,
-      Math.min(
-        tuning.roverSuspensionMaxForce,
-        compression * tuning.roverSuspensionSpring +
-          compressionSpeed * tuning.roverSuspensionDamping,
-      ),
-    );
-
-    body.applyImpulseAtPoint(
-      {
-        x: -down.x * suspensionForce * dt,
-        y: -down.y * suspensionForce * dt,
-      },
-      hitPoint,
-      true,
-    );
-
-    // Surface tangent, oriented toward the rover's forward (right) direction.
-    let tangent = { x: hit.normal.y, y: -hit.normal.x };
-    const right = localVector(body, 1, 0);
-    if (tangent.x * right.x + tangent.y * right.y < 0) {
-      tangent = { x: -tangent.x, y: -tangent.y };
-    }
-
-    tangentX += tangent.x;
-    tangentY += tangent.y;
-    normalX += hit.normal.x;
-    normalY += hit.normal.y;
-    contactX += hitPoint.x;
-    contactY += hitPoint.y;
-    nearestGround = Math.min(nearestGround, hit.timeOfImpact);
-    rover.wheelTravel[i] = hit.timeOfImpact;
-    contacts++;
-  }
-
+  const boostInput = input.up > 0 && (rover.fuel ?? 0) > 0;
+  const boostDv = boostInput
+    ? (tuning.roverBoostForce / LUNAR_ROVER_MASS) * dt
+    : 0;
+  const radius = ROVER_HEIGHT * 0.5;
+  const sample = ROVER_WIDTH * 0.45;
+  const pos = body.translation();
   const vel = body.linvel();
+  const surfaceY = getTerrainHeightAt(terrainHeights, pos.x);
+  const leftY = getTerrainHeightAt(terrainHeights, pos.x - sample);
+  const rightY = getTerrainHeightAt(terrainHeights, pos.x + sample);
+  const slope = Math.atan2(rightY - leftY, sample * 2);
+  const grade = (rightY - leftY) / (sample * 2);
+  const groundY = surfaceY - radius - 0.08;
+  const verticalGap = groundY - pos.y;
+  const snapDistance = 1.1;
+  const travelDirection = Math.sign(vel.x || driveInput || 1);
+  const aheadY = getTerrainHeightAt(
+    terrainHeights,
+    pos.x + travelDirection * (sample + radius),
+  );
+  const leadingEdgeDropped =
+    Math.abs(vel.x) > 2 && aheadY - surfaceY > radius * 1.2;
+  const grounded = verticalGap <= snapDistance && !leadingEdgeDropped;
 
-  if (contacts > 0) {
-    const inv = 1 / contacts;
-    contactX *= inv;
-    contactY *= inv;
-    normalX *= inv;
-    normalY *= inv;
-    const tLen = Math.hypot(tangentX, tangentY) || 1;
-    tangentX /= tLen;
-    tangentY /= tLen;
+  rover.roverBoosting = boostInput;
+  if (boostInput && rover.fuel != null) {
+    rover.fuel = Math.max(0, rover.fuel - tuning.roverBoostFuelBurn * dt);
+  }
+  rover.isGrounded = grounded;
+  rover.terrainAngle = slope;
+  rover.terrainDistance = Math.max(0, verticalGap);
+  rover.wheelTravel = rover.wheelTravel.map(() =>
+    grounded ? radius * 0.18 : tuning.roverSuspensionLength,
+  );
 
-    rover.isGrounded = true;
-    rover.terrainAngle = Math.atan2(tangentY, tangentX);
-    rover.terrainDistance = nearestGround;
-
-    // Rolling velocity along the slope.
-    const tangentialSpeed = vel.x * tangentX + vel.y * tangentY;
+  if (grounded) {
+    let nextVx = vel.x;
 
     if (driveInput !== 0) {
-      // Motor pull along the slope, tapering to zero as we near top speed so
-      // the rover settles at roverMaxSpeed under wheel power alone.
-      const speedAlong = tangentialSpeed * Math.sign(driveInput);
-      const speedFactor = Math.max(0, 1 - speedAlong / tuning.roverMaxSpeed);
-      const drive = driveInput * tuning.roverAccel * speedFactor * dt;
-      body.applyImpulseAtPoint(
-        { x: tangentX * drive, y: tangentY * drive },
-        { x: contactX, y: contactY },
-        true,
-      );
+      const speedAlong = nextVx * Math.sign(driveInput);
+      const speedFactor = Math.max(0.25, 1 - speedAlong / tuning.roverMaxSpeed);
+      nextVx +=
+        driveInput * (tuning.roverAccel / LUNAR_ROVER_MASS) * speedFactor * dt;
     } else {
-      // Engine braking / grip: bleed off rolling speed (capped per step) so the
-      // rover holds on inclines instead of sliding.
       const maxBrake = tuning.roverGrip * dt;
-      const dv = Math.max(-maxBrake, Math.min(maxBrake, tangentialSpeed));
-      body.applyImpulse(
-        { x: -tangentX * dv * mass, y: -tangentY * dv * mass },
+      nextVx -= Math.sign(nextVx) * Math.min(Math.abs(nextVx), maxBrake);
+    }
+    nextVx += boostDv;
+
+    const maxSpeed = tuning.roverMaxSpeed + (boostInput ? 18 : 0);
+    nextVx = Math.max(-tuning.roverMaxSpeed, Math.min(maxSpeed, nextVx));
+    const nextVy = grade * nextVx;
+
+    body.setTranslation({ x: pos.x, y: groundY }, true);
+    body.setLinvel({ x: nextVx, y: nextVy }, true);
+    body.setRotation(slope, true);
+    body.setAngvel(0, true);
+    rover.wheelRotation +=
+      (nextVx / Math.max(0.1, radius)) * tuning.roverWheelSpinSpeed * 0.08 * dt;
+  } else {
+    if (boostInput) {
+      body.setLinvel(
+        { x: Math.min(vel.x + boostDv, tuning.roverMaxSpeed + 18), y: vel.y },
         true,
       );
     }
-
-    // Press the chassis into the surface for traction over bumps.
-    body.applyImpulse(
-      {
-        x: -normalX * tuning.roverDownforce * dt,
-        y: -normalY * tuning.roverDownforce * dt,
-      },
-      true,
-    );
-  } else {
-    rover.terrainDistance = Infinity;
-    // Airborne: steer pitches the chassis to line up a landing.
     if (driveInput !== 0) {
       body.applyTorqueImpulse(driveInput * tuning.roverAirTorque * dt, true);
     }
+    rover.terrainDistance = Infinity;
   }
 
-  // Absolute safety ceiling — momentum from launches can briefly exceed the
-  // motor's top speed, but never let it run away.
-  const hardCap = tuning.roverMaxSpeed * 2.5;
-  const postVel = body.linvel();
-  const speed = Math.hypot(postVel.x, postVel.y);
-  if (speed > hardCap) {
-    const scale = hardCap / speed;
-    body.setLinvel({ x: postVel.x * scale, y: postVel.y * scale }, true);
+  const hardCap = tuning.roverMaxSpeed + 24;
+  const nextVel = body.linvel();
+  if (Math.abs(nextVel.x) > hardCap) {
+    body.setLinvel(
+      { x: Math.sign(nextVel.x) * hardCap, y: nextVel.y },
+      true,
+    );
   }
 
-  rover.wheelDriveInput = Math.sign(postVel.x);
-  rover.wheelRotation += postVel.x * tuning.roverWheelSpinSpeed * 0.08 * dt;
+  rover.wheelDriveInput = Math.sign(body.linvel().x);
 }
 
 export function syncRoverGraphics(rover: Rover) {

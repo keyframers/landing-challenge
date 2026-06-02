@@ -34,7 +34,6 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
   const ctx = state.context;
   const touchXRef = useRef<number | null>(null);
   const touchYRef = useRef<number | null>(null);
-  const [showControls, setShowControls] = useState(false);
 
   const currentMission = missions[ctx.currentMission];
   const speed = Math.sqrt(ctx.velocity.x ** 2 + ctx.velocity.y ** 2);
@@ -47,6 +46,19 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
     window.addEventListener("scroll", explore);
     return () => window.removeEventListener("scroll", explore);
   }, [actor]);
+
+  useEffect(() => {
+    if (!state.matches("manual")) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      actor.send({ type: event.key === "ArrowRight" ? "BROWSE_NEXT" : "BROWSE_PREV" });
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [actor, state]);
 
   function getStatusText(): string {
     if (state.matches("loading")) return "Loading";
@@ -89,11 +101,11 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
         />
       )}
 
-      {(state.matches("info") || showControls) && (
+      {(state.matches("info") || ctx.controlsOpen) && (
         <InfoDialog
           onClose={() => {
-            if (showControls) {
-              setShowControls(false);
+            if (ctx.controlsOpen) {
+              actor.send({ type: "CLOSE_CONTROLS" });
             } else {
               actor.send({ type: "CLOSE" });
             }
@@ -112,7 +124,7 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
             status={getStatusText()}
             missionNumber={ctx.currentMission + 1}
             totalMissions={missions.length}
-            onInfo={() => actor.send({ type: "INFO" })}
+            onInfo={() => actor.send({ type: "SHOW_CONTROLS" })}
             onPause={() => actor.send({ type: "PAUSE" })}
             onMissionSelect={(missionIndex) =>
               actor.send({ type: "JUMP_TO_MISSION", missionIndex })
@@ -135,7 +147,7 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
               onRetry={() => actor.send({ type: "RETRY" })}
               onSimulate={() => actor.send({ type: "SIMULATE" })}
               onExplore={() => actor.send({ type: "EXPLORE_MISSIONS" })}
-              onControls={() => setShowControls(true)}
+              onControls={() => actor.send({ type: "SHOW_CONTROLS" })}
             />
           )}
 
@@ -145,7 +157,7 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
               onRetry={() => actor.send({ type: "RETRY" })}
               onSimulate={() => actor.send({ type: "SIMULATE" })}
               onExplore={() => actor.send({ type: "EXPLORE_MISSIONS" })}
-              onControls={() => setShowControls(true)}
+              onControls={() => actor.send({ type: "SHOW_CONTROLS" })}
             />
           )}
 
@@ -155,7 +167,7 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
               onRestart={() => actor.send({ type: "RESTART_MISSION" })}
               onSimulate={() => actor.send({ type: "SIMULATE" })}
               onExploreMissions={() => actor.send({ type: "EXPLORE_MISSIONS" })}
-              onControls={() => setShowControls(true)}
+              onControls={() => actor.send({ type: "SHOW_CONTROLS" })}
             />
           )}
 
@@ -256,18 +268,27 @@ export default function GameOverlay({ actor, input, loadingProgress }: GameOverl
 
 function MobileJoystick({ input }: { input: InputManager }) {
   const [isMobile, setIsMobile] = useState(false);
+  const [isLandscapeMobile, setIsLandscapeMobile] = useState(false);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
   const activePointerRef = useRef<number | null>(null);
   const radius = 58;
 
   useEffect(() => {
-    const query = window.matchMedia("(pointer: coarse), (max-width: 768px)");
-    const sync = () => setIsMobile(query.matches);
+    const mobileQuery = window.matchMedia("(pointer: coarse), (max-width: 768px)");
+    const landscapeQuery = window.matchMedia(
+      "(orientation: landscape) and (max-height: 600px)",
+    );
+    const sync = () => {
+      setIsMobile(mobileQuery.matches);
+      setIsLandscapeMobile(mobileQuery.matches && landscapeQuery.matches);
+    };
     sync();
-    query.addEventListener("change", sync);
+    mobileQuery.addEventListener("change", sync);
+    landscapeQuery.addEventListener("change", sync);
     return () => {
-      query.removeEventListener("change", sync);
+      mobileQuery.removeEventListener("change", sync);
+      landscapeQuery.removeEventListener("change", sync);
       input.setAnalog({ left: 0, right: 0, up: 0 });
     };
   }, [input]);
@@ -316,11 +337,18 @@ function MobileJoystick({ input }: { input: InputManager }) {
       onPointerCancel={reset}
       style={{
         position: "absolute",
-        left: "50%",
-        bottom: "max(1.25rem, env(safe-area-inset-bottom))",
+        left: isLandscapeMobile ? "auto" : "50%",
+        right: isLandscapeMobile
+          ? "max(1rem, env(safe-area-inset-right))"
+          : "auto",
+        top: isLandscapeMobile ? "50%" : "auto",
+        bottom: isLandscapeMobile
+          ? "auto"
+          : "max(1.25rem, env(safe-area-inset-bottom))",
         width: "9rem",
         height: "9rem",
-        marginLeft: "-4.5rem",
+        marginLeft: isLandscapeMobile ? 0 : "-4.5rem",
+        transform: isLandscapeMobile ? "translateY(-50%)" : "none",
         borderRadius: "50%",
         border: "1px solid rgba(255,255,255,0.3)",
         background: "rgba(10,10,20,0.34)",

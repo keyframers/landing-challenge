@@ -12,17 +12,28 @@ export function useModalKeyboard(ref: RefObject<HTMLElement | null>) {
     }
 
     requestAnimationFrame(() => {
-      getButtons()[0]?.focus();
+      const primaryButton = root.querySelector<HTMLButtonElement>(
+        "[data-primary='true']",
+      );
+      (primaryButton ?? getButtons()[0])?.focus();
     });
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      if (
+        event.key !== "ArrowDown" &&
+        event.key !== "ArrowUp" &&
+        event.key !== "ArrowRight" &&
+        event.key !== "ArrowLeft"
+      ) {
+        return;
+      }
       const buttons = getButtons();
       if (buttons.length === 0) return;
 
       event.preventDefault();
       const currentIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
-      const direction = event.key === "ArrowDown" ? 1 : -1;
+      const direction =
+        event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : -1;
       const nextIndex =
         currentIndex === -1
           ? 0

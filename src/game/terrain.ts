@@ -1,10 +1,7 @@
 import {
   Graphics,
   Container,
-  Mesh,
-  MeshGeometry,
   Text,
-  Texture,
 } from 'pixi.js';
 import gsap from 'gsap';
 import { createNoise2D } from 'simplex-noise';
@@ -22,7 +19,6 @@ const WIREFRAME_COLOR = 0xffffff;
 const FOREGROUND_TOP = 0xcdcdd2;
 const FOREGROUND_BOTTOM = 0x343946;
 const VISUAL_FOREGROUND_FILL = 0x4c5260;
-let foregroundGradientTexture: Texture | null = null;
 
 type TerrainRenderMode = 'flat' | 'mainGradient' | 'foregroundDark';
 
@@ -338,10 +334,15 @@ export function createTerrainGraphics(
   const ppm = PIXELS_PER_METER;
   const wireframe = tuning.wireframe;
 
-  function drawTerrainFill(fillColor: number, fillAlpha: number, drop = 1000) {
-    g.moveTo(0, heights[0] * ppm);
+  function drawTerrainFill(
+    fillColor: number,
+    fillAlpha: number,
+    drop = 1000,
+    yOffset = 0,
+  ) {
+    g.moveTo(0, (heights[0] + yOffset) * ppm);
     for (let i = 1; i < heights.length; i++) {
-      g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
+      g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, (heights[i] + yOffset) * ppm);
     }
     g.lineTo((heights.length - 1) * TERRAIN_SEGMENT_SIZE * ppm, drop * ppm);
     g.lineTo(0, drop * ppm);
@@ -358,9 +359,8 @@ export function createTerrainGraphics(
     container.addChild(g);
   } else {
     if (mode === 'mainGradient') {
-      const mesh = createTerrainGradientMesh(heights, alpha);
-      container.addChild(mesh);
-      drawSurfaceHighlights(g, heights);
+      drawPseudoGradientTerrain(g, drawTerrainFill, alpha);
+      drawSurfaceHighlight(g, heights);
       container.addChild(g);
     } else if (mode === 'foregroundDark') {
       drawTerrainFill(VISUAL_FOREGROUND_FILL, alpha);
@@ -374,81 +374,45 @@ export function createTerrainGraphics(
   return container;
 }
 
-function createForegroundGradientTexture() {
-  if (foregroundGradientTexture) return foregroundGradientTexture;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 256;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    foregroundGradientTexture = Texture.WHITE;
-    return foregroundGradientTexture;
-  }
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#CDCDD2');
-  gradient.addColorStop(1, '#343946');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  foregroundGradientTexture = Texture.from(canvas);
-  return foregroundGradientTexture;
+function mixColor(from: number, to: number, t: number) {
+  const fr = (from >> 16) & 0xff;
+  const fg = (from >> 8) & 0xff;
+  const fb = from & 0xff;
+  const tr = (to >> 16) & 0xff;
+  const tg = (to >> 8) & 0xff;
+  const tb = to & 0xff;
+  const r = Math.round(fr + (tr - fr) * t);
+  const g = Math.round(fg + (tg - fg) * t);
+  const b = Math.round(fb + (tb - fb) * t);
+  return (r << 16) | (g << 8) | b;
 }
 
-function createTerrainGradientMesh(heights: number[], alpha: number) {
-  const ppm = PIXELS_PER_METER;
-  const dropY = 1000 * ppm;
-  const positions: number[] = [];
-  const uvs: number[] = [];
-  const indices: number[] = [];
-
-  for (let i = 0; i < heights.length; i++) {
-    const x = i * TERRAIN_SEGMENT_SIZE * ppm;
-    const topY = heights[i] * ppm;
-    positions.push(x, topY, x, dropY);
-    uvs.push(0, 0, 0, 1);
-  }
-
-  for (let i = 0; i < heights.length - 1; i++) {
-    const topLeft = i * 2;
-    const bottomLeft = topLeft + 1;
-    const topRight = topLeft + 2;
-    const bottomRight = topLeft + 3;
-    indices.push(
-      topLeft,
-      bottomLeft,
-      topRight,
-      topRight,
-      bottomLeft,
-      bottomRight,
+function drawPseudoGradientTerrain(
+  g: Graphics,
+  drawTerrainFill: (color: number, alpha: number, drop?: number, yOffset?: number) => void,
+  alpha: number,
+) {
+  const bands = 36;
+  const depth = 260;
+  for (let i = 0; i < bands; i++) {
+    const t = i / (bands - 1);
+    const eased = t * t * (3 - 2 * t);
+    drawTerrainFill(
+      mixColor(FOREGROUND_TOP, FOREGROUND_BOTTOM, eased),
+      alpha,
+      1000,
+      t * depth,
     );
   }
-
-  const mesh = new Mesh({
-    geometry: new MeshGeometry({
-      positions: new Float32Array(positions),
-      uvs: new Float32Array(uvs),
-      indices: new Uint32Array(indices),
-    }),
-    texture: createForegroundGradientTexture(),
-  });
-  mesh.alpha = alpha;
-  return mesh;
 }
 
-function drawSurfaceHighlights(g: Graphics, heights: number[]) {
+function drawSurfaceHighlight(g: Graphics, heights: number[]) {
   const ppm = PIXELS_PER_METER;
   g.moveTo(0, heights[0] * ppm);
   for (let i = 1; i < heights.length; i++) {
     g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, heights[i] * ppm);
   }
-  g.stroke({ color: 0xf2f3f5, width: 2, alpha: 0.22 });
-
-  g.moveTo(0, (heights[0] + 7) * ppm);
-  for (let i = 1; i < heights.length; i++) {
-    g.lineTo(i * TERRAIN_SEGMENT_SIZE * ppm, (heights[i] + 7) * ppm);
-  }
-  g.stroke({ color: FOREGROUND_BOTTOM, width: 4, alpha: 0.1 });
+  g.stroke({ color: 0xf2f3f5, width: 1.5, alpha: 0.2 });
 }
 
 export function createLandingZoneMarker(zone: LandingZone): Container {

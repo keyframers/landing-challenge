@@ -9,32 +9,31 @@ import PhysicsPropsPlugin from "gsap/PhysicsPropsPlugin";
 import Physics2DPlugin from "gsap/Physics2DPlugin";
 import Button from "./Button";
 import { RoughEase } from "gsap/EasePack";
+import { useModalKeyboard } from "./useModalKeyboard";
 
 gsap.registerPlugin(useGSAP, SplitText, CustomEase, RoughEase, PhysicsPropsPlugin, Physics2DPlugin);
 
 interface TitleScreenProps {
   onLaunch: () => void;
-  onBrowse: () => void;
-  onInfo: () => void;
+  onExploreMissions: () => void;
 }
 
 export default function TitleScreen({
   onLaunch,
-  onBrowse,
-  onInfo,
   onExploreMissions,
 }: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  useModalKeyboard(containerRef);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Enter" || e.code === "KeyA") {
-        onLaunch();
+      if (e.code === "Escape") {
+        tlRef.current?.timeScale(7);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onLaunch]);
+  }, []);
 
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
@@ -169,7 +168,7 @@ clamp:false
       <div className={styles.subtitle}>Explore the Apollo Missions</div>
       <h1 className={styles.title}>Lunar Landing</h1>
       <div className={styles.buttonGroup}>
-        <Button onClick={onLaunch} large>
+        <Button onClick={onLaunch} large data-primary="true">
           Launch
         </Button>
         <Button onClick={onExploreMissions} subtle>

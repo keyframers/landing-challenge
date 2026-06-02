@@ -52,7 +52,7 @@ export type VehicleColliderMode = 'lander' | 'rover';
 
 function createVehicleColliderDesc(mode: VehicleColliderMode): RAPIER.ColliderDesc {
   if (mode === 'rover') {
-    return RAPIER.ColliderDesc.roundCuboid(ROVER_WIDTH / 2, ROVER_HEIGHT / 2, 0.25)
+    return RAPIER.ColliderDesc.ball(ROVER_HEIGHT / 2)
       .setFriction(1.4)
       .setRestitution(0)
       .setDensity(0.1);
@@ -110,12 +110,10 @@ export function replaceVehicleCollider(
   );
 
   if (mode === 'rover') {
-    const inertia =
-      (LUNAR_ROVER_MASS * (ROVER_WIDTH * ROVER_WIDTH + ROVER_HEIGHT * ROVER_HEIGHT)) /
-      12;
+    const inertia = (LUNAR_ROVER_MASS * ROVER_HEIGHT * ROVER_HEIGHT) / 8;
     body.rigidBody.setAdditionalMassProperties(
       LUNAR_ROVER_MASS,
-      { x: 0, y: ROVER_HEIGHT * 0.2 },
+      { x: 0, y: 0 },
       inertia,
       true,
     );
