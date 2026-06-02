@@ -11,7 +11,7 @@
   --accent: #f00;
   --subtle: #a1a5b1;
   --dark: #4d5361;
-  --content-bg: #4d5361;
+  --content-bg: #353b47;
 }
 
 * {
@@ -21,7 +21,7 @@
 html {
   /* Root font-size scales with viewport width so all rem-based
      font sizes are relative to viewport width. 1.6vw ≈ 16px at 1000px. */
-  font-size: clamp(11px, 1.6vw, 22px);
+  font-size: clamp(13px, 1.6vw, 22px);
 }
 
 html,
