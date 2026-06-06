@@ -45,7 +45,8 @@
   color: var(--subtle);
 }
 
-.root[data-subtle="true"]:hover {
+.root[data-subtle="true"]:hover,
+.root[data-subtle="true"]:focus {
   border-color: var(--text-color);
   color: var(--text-color);
 }
