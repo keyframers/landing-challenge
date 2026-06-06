@@ -98,49 +98,51 @@ export default function InfoPanel({
   );
 
   return (
-    <div ref={panelRef} className={styles.panel}>
-      <div className={styles.panelBackground} />
+    <>
+      <div className={styles.badge}>★ Mission Unlocked</div>
+      <div ref={panelRef} className={styles.panel}>
+        <div className={styles.panelBackground} />
 
-      <div className={styles.panelContent}>
-        <div className={styles.badge}>★ Mission Unlocked</div>
-        <h2 className={styles.title}>
-          <span className={styles.titleText}>{mission.name}</span>
+        <div className={styles.panelContent}>
+          <h2 className={styles.title}>
+            <span className={styles.titleText}>{mission.name}</span>
 
-          <span className={styles.titleLine} />
-          <span className={styles.titleLine} />
-        </h2>
+            <span className={styles.titleLine} />
+            <span className={styles.titleLine} />
+          </h2>
 
-        <div className={styles.missionDetails}>
-          <div className={styles.date}>{mission.date}</div>
-          <p className={styles.description}>{mission.description}</p>
+          <div className={styles.missionDetails}>
+            <div className={styles.date}>{mission.date}</div>
+            <p className={styles.description}>{mission.description}</p>
 
-          <InfoPanelLabel>Crew</InfoPanelLabel>
-          <div className={styles.crew}>{mission.crew.join(" · ")}</div>
+            <InfoPanelLabel>Crew</InfoPanelLabel>
+            <div className={styles.crew}>{mission.crew.join(" · ")}</div>
 
-          <div className={styles.buttonGroup}>
-            {showRoverButton && (
-              <Button onClick={onDriveRover} className={styles.roverButton}>
-                Drive Rover
+            <div className={styles.buttonGroup}>
+              {showRoverButton && (
+                <Button onClick={onDriveRover} className={styles.roverButton}>
+                  Drive Rover
+                </Button>
+              )}
+              {onExploreMissions && (
+                <Button onClick={onExploreMissions} className={styles.roverButton}>
+                  Explore
+                </Button>
+              )}
+              <Button
+                ref={continueRef}
+                onClick={onContinue}
+                className={styles.continueButton}
+                data-primary="true"
+              >
+                Continue →
               </Button>
-            )}
-            {onExploreMissions && (
-              <Button onClick={onExploreMissions} className={styles.roverButton}>
-                Explore
-              </Button>
-            )}
-            <Button
-              ref={continueRef}
-              onClick={onContinue}
-              className={styles.continueButton}
-              data-primary="true"
-            >
-              Continue →
-            </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <MissionImages className={styles.images} mission={mission} />
-    </div>
+        <MissionImages className={styles.images} mission={mission} />
+      </div>
+    </>
   );
 }

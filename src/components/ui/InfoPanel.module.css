@@ -44,9 +44,11 @@
 }
 
 .badge {
-  position: absolute;
-  right: 0;
-  top: 0;
+  position: fixed;
+  inset-inline: 0;
+  inset-block-start: 0;
+  z-index: 100;
+  margin: 0.5rem auto 0.5rem;
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   color: #ffcc00;
