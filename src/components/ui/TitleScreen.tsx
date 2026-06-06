@@ -18,17 +18,12 @@ interface TitleScreenProps {
   onExploreMissions: () => void;
 }
 
-export default function TitleScreen({
-  onLaunch,
-  onExploreMissions,
-}: TitleScreenProps) {
+export default function TitleScreen({ onLaunch, onExploreMissions }: TitleScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   useModalKeyboard(containerRef);
 
   function focusLaunchButton() {
-    containerRef.current
-      ?.querySelector<HTMLButtonElement>("[data-primary='true']")
-      ?.focus();
+    containerRef.current?.querySelector<HTMLButtonElement>("[data-primary='true']")?.focus();
   }
 
   useEffect(() => {
@@ -67,19 +62,9 @@ export default function TitleScreen({
             "custom",
             "M0,0 C0.126,0.382 0.187,0.558 0.317,0.732 0.429,0.883 0.596,1.036 0.657,1 0.779,0.923 0.881,1 1,1 "
           ),
-          /*CustomEase.create(
-          "custom",
-          "M0,0 C0.644,0.017 0.497,1.066 0.859,0.979 0.924,0.963 0.942,0.963 1,1 ",
-        )*/
-          // physicsProps: {
-          //   // x: { velocity: 10, acceleration: 20 },
-          //   y: { velocity: -50, acceleration: 10 },
-          // },
-          // physics2D: { velocity: 60, angle: -90, gravity: 100 },
           duration: 4.5,
-          // scaleY: 0,
           stagger: {
-            from: "edges", //"center",
+            from: "edges",
             amount: 0.8,
           },
         },
@@ -92,7 +77,7 @@ export default function TitleScreen({
           duration: 1.5,
           textShadow: "-1px 0.05em 0.1em orange, 1px 0.2em 0.2em red",
           stagger: {
-            from: "edges", //"center",
+            from: "edges",
             amount: 0.8,
           },
           ease: `rough({
