@@ -294,6 +294,7 @@ export const gameMachine = setup({
           on: {
             PAUSE: "paused",
             RETURN_TO_LANDER: "descending",
+            CRASHED: "crashed",
           },
         },
 

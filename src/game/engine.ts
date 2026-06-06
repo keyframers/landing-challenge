@@ -420,19 +420,12 @@ export async function createGame(
     body.setTranslation(
       {
         x: roverPos.x,
-        y:
-          roverPos.y -
-          ROVER_HEIGHT / 2 -
-          LANDER_HEIGHT / 2 -
-          RETURN_TO_LANDER_CLEARANCE,
+        y: roverPos.y - ROVER_HEIGHT / 2 - LANDER_HEIGHT / 2 - RETURN_TO_LANDER_CLEARANCE,
       },
       true
     );
     body.setRotation(0, true);
-    body.setLinvel(
-      { x: roverVel.x * 0.35, y: -RETURN_TO_LANDER_BOOST_SPEED },
-      true
-    );
+    body.setLinvel({ x: roverVel.x * 0.35, y: -RETURN_TO_LANDER_BOOST_SPEED }, true);
     body.setAngvel(0, true);
     applyThrust(body, RETURN_TO_LANDER_BOOST_IMPULSE, { x: 0, y: -1 });
     vehicle.thrustLevel = 1;
@@ -603,22 +596,40 @@ export async function createGame(
       const { landingZoneX, landingZoneWidth } = mission.terrain;
       return pos.x >= landingZoneX && pos.x <= landingZoneX + landingZoneWidth;
     });
-    const result =
-      missionIndex === -1
-        ? { type: "missed" as const }
-        : checkLanding(
-            vehicle as unknown as Lander,
-            missions[missionIndex].terrain.landingZoneX,
-            missions[missionIndex].terrain.landingZoneWidth
-          );
+
+    // Check if landed at any landing zone (for refueling)
+    const landedAtAnyZone = missionIndex !== -1;
+    if (landedAtAnyZone) {
+      vehicle.fuel = MAX_FUEL;
+    }
+
+    // Check if landed at the designated mission zone
+    const currentMission = actor.getSnapshot().context.currentMission;
+    const isInDesignatedZone = missionIndex === currentMission;
+
+    const result = isInDesignatedZone
+      ? checkLanding(
+          vehicle as unknown as Lander,
+          missions[currentMission].terrain.landingZoneX,
+          missions[currentMission].terrain.landingZoneWidth
+        )
+      : { type: "missed" as const };
 
     if (!result) return;
 
     if (result.type === "crashed") {
       crashVehicle(pos);
     } else if (result.type === "missed") {
-      starterBoost = null;
-      actor.send({ type: "MISSED" });
+      if (landedAtAnyZone) {
+        // Landed at a non-designated zone - refuel but don't complete mission
+        particles.emitDust(pos.x, pos.y);
+        vehicle.body.rigidBody.setLinvel({ x: 0, y: 0 }, true);
+        vehicle.body.rigidBody.setAngvel(0, true);
+        actor.send({ type: "LANDED", missionIndex: currentMission });
+      } else {
+        starterBoost = null;
+        actor.send({ type: "MISSED" });
+      }
     } else {
       particles.emitDust(pos.x, pos.y);
       vehicle.body.rigidBody.setLinvel({ x: 0, y: 0 }, true);
@@ -722,8 +733,8 @@ export async function createGame(
   input.setEscapeCallback(() => {
     const state = actor.getSnapshot();
     if (state.context.controlsOpen) return;
-    if (state.matches({ playing: 'paused' })) {
-      actor.send({ type: 'RESUME' });
+    if (state.matches({ playing: "paused" })) {
+      actor.send({ type: "RESUME" });
     } else if (
       state.matches({ playing: "descending" }) ||
       state.matches({ playing: "rover" }) ||
@@ -847,16 +858,31 @@ export async function createGame(
       world.gravity = { x: 0, y: tuning.gravity };
       accumulator += delta;
       while (accumulator >= FIXED_TIMESTEP) {
-        updateRoverPhysics(
-          vehicle as unknown as Rover,
-          input.state,
-          FIXED_TIMESTEP,
-          terrain.surfaceHeights,
-        );
+        // Pass fuel to rover physics so it can consume it
+        const rover = vehicle as unknown as Rover;
+        rover.fuel = vehicle.fuel;
+        updateRoverPhysics(rover, input.state, FIXED_TIMESTEP, terrain.surfaceHeights);
+        // Sync fuel back from rover
+        vehicle.fuel = rover.fuel ?? vehicle.fuel;
         world.step();
         accumulator -= FIXED_TIMESTEP;
       }
       syncVehicleGraphics();
+
+      // Check if rover is over a landing zone and refuel
+      const pos = vehicle.body.rigidBody.translation();
+      const missionIndex = missions.findIndex((mission) => {
+        const { landingZoneX, landingZoneWidth } = mission.terrain;
+        return pos.x >= landingZoneX && pos.x <= landingZoneX + landingZoneWidth;
+      });
+      if (missionIndex !== -1) {
+        vehicle.fuel = MAX_FUEL;
+      }
+
+      // Check if fuel reached 0 and trigger mission failed
+      if (vehicle.fuel <= 0) {
+        actor.send({ type: "CRASHED" });
+      }
 
       telemetryTimer += delta;
       if (telemetryTimer >= TELEMETRY_INTERVAL) {
